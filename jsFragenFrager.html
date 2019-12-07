@@ -1,0 +1,2645 @@
+<html>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+<head>
+
+    <title>JavaScript FragenFrager</title>
+
+    <script src="clsAntwort.js"                    type="text/javascript" ></script>
+    <script src="clsFrage.js"                      type="text/javascript" ></script>
+    <script src="clsFragenKatalog.js"              type="text/javascript" ></script>
+    <script src="clsAnwFragenFrager.js"            type="text/javascript" ></script>
+    <script src="clsTypAbfrage.js"                 type="text/javascript" ></script>
+    <script src="clsLernFrabrik.js"                type="text/javascript" ></script>
+    <script src="clsStringArray.js"                type="text/javascript" ></script>
+    <script src="fkTestErstellungFragenkatalog.js" type="text/javascript" ></script>
+    <script src="fkExportFrageBogen.js"            type="text/javascript" ></script> 
+    <script src="fkFragenKatalogLaden.js"          type="text/javascript" ></script>
+    <script src="fkString.js"                      type="text/javascript" ></script>
+    
+    <script src="jquery-1.9.0.min.js"              type="text/javascript" ></script>
+
+    <style type="text/css">
+
+    html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p,
+    blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em,
+    font, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var,
+    b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend,
+    table, caption, tbody, tfoot, thead, tr, th, td {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        outline: 0;
+        font-size: 100%;
+        vertical-align: baseline;
+        background: transparent;
+    }
+
+    body { background-color:#FFFFFF; padding-left:1em; font: 15px Arial, sans-serif;}
+
+    .cssFeldAnzahl   { padding-left:1em; padding-right:1em; width:5em;}
+
+    .cssLabelAntwort { width:100%; }
+
+    .cssAnwButton   { 
+        padding-top:5px; 
+        padding-bottom:5px; 
+        display:inline; 
+        overflow:hidden;
+        background-color: #ECECEC;
+        margin-top:1px; 
+        margin-bottom:5px;
+        margin-left:1px; 
+        margin-right:10px;
+        border: 1px solid black;
+        width:160px !important;
+        text-align:center;
+    }
+    
+    .cssAnwButton:hover { 
+        background-color: #E2EFFC;
+    }
+
+    .cssMyLabelCheckBox {
+        background-color: #aaAAaa;
+        width:20px;
+        padding-left:5px; 
+        padding-right:5px; 
+     }
+
+     .cssPropChecked {
+        background-color: #FAF040 !important;
+        border: 1px solid black;
+     }
+
+     .cssOptzeile {
+        background-color: background-color:#dfdfdf; !important;
+        display: inline-block;
+     }
+
+    .frameButtonDiv { padding-top:1px; padding-bottom:1px; overflow:hidden;  height: auto !important; display:flex; background-color:#dfdfdf; }
+
+  </style>
+
+  <script type="text/javascript">
+
+  function wl( pString )
+  {
+    if ( window.console )
+    {
+      var fmt = function( number )
+      {
+        return ( number < 10 ? '0' : '' ) + number
+      };
+
+      var now = new Date();
+
+      pString = fmt( now.getDate() ) + '.' + fmt( now.getMonth() + 1 ) + '.' + now.getFullYear() + ' ' + fmt( now.getHours() ) + ':' + fmt( now.getMinutes() ) + ':' + fmt( now.getSeconds() ) + ' ' + pString;
+
+      window.console.log( pString );
+    }
+  };
+
+
+  function appFF()
+  {
+    /*
+     * Indexkonstanten fuer die Antworten
+     */
+    this.INDEX_ANTWORT_1 = 1;
+    this.INDEX_ANTWORT_2 = 2;
+    this.INDEX_ANTWORT_3 = 3;
+    this.INDEX_ANTWORT_4 = 4;
+    this.INDEX_ANTWORT_5 = 5;
+    this.INDEX_ANTWORT_6 = 6;
+    this.INDEX_ANTWORT_7 = 7;
+    this.INDEX_ANTWORT_8 = 8;
+
+    /*
+     * Konstanten fuer die Navigation zwischen den Fragen
+     */
+    this.ANZEIGE_ERSTE_FRAGE     = 0;
+    this.ANZEIGE_NAECHSTE_FRAGE  = 1;
+    this.ANZEIGE_VORHERIGE_FRAGE = 2;
+    this.ANZEIGE_LETZTE_FRAGE    = 3;
+
+    /*
+     * Farb-Konstanten 
+     */
+    this.FARBE_AKTUELL              = "#E0E0E0"; 
+    this.FARBE_GRAU                 = "#d4d4d0"; 
+    this.FARBE_GRAU_FRAME_BUTTONS   = "#dfdfdf"; 
+    this.FARBE_GRAU_FRAME_FRAGEN    = "#dfdfdf"; 
+    this.FARBE_GRAU_FRAME_ANWENDUNG = "#dfdfdf"; 
+    this.FARBE_TEXT_ANTWORT_ENABLED = "#000000"; 
+    this.FARBE_GRUEN                = "#35FD5D"; 
+    this.FARBE_ROT                  = "#FF0000"; 
+    this.FARBE_TEXT                 = "#000000"; 
+
+    this.FARBE_DISABLED_TEXT        = "#999999"; 
+    this.FARBE_ENABLED_TEXT         = "#000000"; 
+
+    this.FARBE_DISABLED_BG          = "#d4d4d0"; 
+    this.FARBE_ENABLED_BG           = "#d4d4d0"; 
+
+    /*
+     * Kennzeichenfeld, ob die Antwortfelder in der Farbe bei einem 
+     * Mouse-Move-Ereignis in der Farbe geaendert werden sollen.
+     * 
+     * Kennzeichen ist TRUE, wenn die Frage im geloestem Zustand
+     * angezeigt wird und ein Markieren der Antworten verhindert
+     * werden soll.
+     */
+    this.m_ui_knz_farbmarkierung_antworten = true;
+
+    /*
+     * Kennzeichenfeld, ob bei einem Click auf die Antwort
+     * die Checkbox gewaehlt werden soll.
+     */
+    this.m_knz_antwort_set_checkbox_enabled = true;
+
+    /*
+     * Kennzeichenfeld, ob die Antwortbezeichnung ausgegeben werden soll.
+     */
+    this.m_knz_antwort_bezeichnung_anzeigen = true;
+
+    /*
+     * Kennzeichenfeld, ob der Fragentext angezeigt werden soll.
+     */
+    this.m_knz_fragen_text_anzeigen = true;
+
+    /*
+     * Kennzeichenfeld, ob die bei einer korrekten Antwort, der 
+     * Antworttext ausgegeben werden soll.
+     * 
+     * (Wegblendung von korrekten Antworten)
+     */
+    this.m_knz_antwort_text_korrekt_anzeigen = true;
+
+    /*
+     * Kennzeichenfeld, ob die bei einer falschen Antwort, der 
+     * Antworttext ausgegeben werden soll.
+     * 
+     * (Wegblendung von falschen Antworten)
+     */
+    this.m_knz_antwort_text_falsch_anzeigen = true;
+
+    /*
+     * Kennzeichenfeld, ob die Fragennummer ausgegeben werden soll.
+     */
+    this.m_knz_fragen_nummer_anzeigen = true;
+
+    /*
+     * Kennzeichenfeld, ob die Antwortreihenfolge umgestellt werden soll
+     */
+    this.m_knz_antwort_reihenfolge_umstellen = false;
+
+    /*
+     * Kennzeichenfeld, ob der Button "OK" die Funktion 
+     * von "Weiter" hat.
+     */
+    this.m_knz_btn_ok_ist_naechste_frage     = true;
+    this.m_knz_korrekt_beantwortet_weiter    = true;
+    this.m_knz_korrekte_antwort_anzeigen     = true;
+    this.m_knz_rechts_click_ist_weiter       = true;
+    this.m_ui_knz_50_50_joker_durchgefuehrt  = true;
+    this.m_ui_knz_50_50_joker_moeglich       = true;
+    this.m_ui_knz_loesen_moeglich            = true;
+    this.m_ui_knz_farbmarkierung_antworten   = true;
+
+    this.m_anzahl_angezeigt                  = 0;
+    this.m_anzahl_falsch_beantwortet         = 0;
+    this.m_anzahl_fragen_beantwortet         = 0;
+    this.m_anzahl_fragen_nicht_beantwortet   = 0;
+    this.m_anzahl_korrekt_beantwortet        = 0;
+
+    /*
+     * Prozentzahlen bei einer Abfragesitzung
+     */
+    this.m_anzahl_prozent_falsch             = 0.0;
+    this.m_anzahl_prozent_korrekt            = 0.0;
+
+    /*
+     * Speichert die aktuell angezeigte Frage
+     */
+    this.m_aktuelle_frage = undefined;
+
+    /*
+     * Instanz fuer die FragenFrager-Anwendung
+     * - speichert den Fragenkatalog
+     * - speichert die aktuelle Fragensitzung
+     */
+    this.m_anw_fragen_frager = undefined;
+
+    /*
+     * Name des aktuell angezeigten Bildes (hier nicht verwendet)
+     */
+    this.m_datei_name_aktuelles_bild = undefined;
+  }
+
+
+  appFF.prototype.anwInit = function()
+  {
+    $( '#frameAnwendung' ).css( 'background-color',    this.FARBE_GRAU_FRAME_ANWENDUNG );
+    $( '#frameAnwendung' ).css( 'width',               '45em' );
+    $( '#frameAnwendung' ).css( 'margin-top',          '5px' );
+    $( '#frameAnwendung' ).css( 'margin-bottom',       '5px' );
+    $( '#frameAnwendung' ).css( 'padding-top',         '5px' );
+    $( '#frameAnwendung' ).css( 'padding-bottom',      '5px' );
+    $( '#frameAnwendung' ).css( 'padding-left',        '5px' );
+    $( '#frameAnwendung' ).css( 'padding-right',       '5px' );
+    $( '#frameAnwendung' ).css( 'overflow',            'hidden' );
+
+    $( '#frameFragen' ).css( 'background-color',       this.FARBE_GRAU_FRAME_FRAGEN );
+    $( '#frameFragen' ).css( 'display',                'block' );
+    $( '#frameFragen' ).css( 'width',                  '43em' );
+    $( '#frameFragen' ).css( 'height',                 '15em' );
+    $( '#frameFragen' ).css( 'margin-top',             '5px' );
+    $( '#frameFragen' ).css( 'margin-bottom',          '5px' );
+    $( '#frameFragen' ).css( 'padding-top',            '5px' );
+    $( '#frameFragen' ).css( 'padding-bottom',         '5px' );
+    $( '#frameFragen' ).css( 'padding-left',           '5px' );
+    $( '#frameFragen' ).css( 'padding-right',          '5px' );
+    $( '#frameFragen' ).css( 'overflow',               'hidden' );
+
+    $( '#frameAnzeigeZaehler' ).css( 'background-color', this.FARBE_GRAU_FRAME_FRAGEN );
+    $( '#frameAnzeigeZaehler' ).css( 'margin-top',     '5px' );
+    $( '#frameAnzeigeZaehler' ).css( 'margin-bottom',  '5px' );
+    $( '#frameAnzeigeZaehler' ).css( 'padding-top',    '5px' );
+    $( '#frameAnzeigeZaehler' ).css( 'padding-bottom', '5px' );
+    $( '#frameAnzeigeZaehler' ).css( 'padding-left',   '5px' );
+    $( '#frameAnzeigeZaehler' ).css( 'padding-right',  '5px' );
+    $( '#frameAnzeigeZaehler' ).css( 'width',          '40em' );
+    $( '#frameAnzeigeZaehler' ).css( 'overflow',       'hidden' );
+
+    this.anwUiSetStatusText( this.getAnwFragenFrager().getTextStatusFragenIndex() );
+  }
+
+
+  appFF.prototype.anwUiMarkiereAntwortMouseMove = function( pIndexAntwortControl )
+  {
+    /*
+     * Markierung der Antworten
+     * 
+     * Bei einem Mouse-Move-Ereignis sollen die UI-Controls der Antwort unter
+     * dem Mouse-Cursor hervorgehoben werden.
+     * 
+     * Die Farbmarkierung wird ausgeschaltet, wenn die aktuelle Frage vom 
+     * Anwender geloest worden ist. In diesem Fall stehen die Farben der
+     * UI-Antwort-Controls fest und sollen durch ein Mouse-Move nicht 
+     * veraendert werden.
+     * 
+     * Diese Funktion wird mit dem Antwortindex des Mouse-Move-Events gerufen.
+     * 
+     * Es werden alle Antworten in der Farbe geaendert, wobei diejenige
+     * Antwort mit dem Index aus dem Parameter eine andere Farbe bekommt.
+     * Es wird die Hintergrundfarbe geaendert.
+     * 
+     * Eine Loesung ueber CSS mit "Hover" wird nicht gemacht, da die oben
+     * genannte Einschraenkung beim hervorheben der Antworten gemacht wird.
+     */
+    if ( this.m_ui_knz_farbmarkierung_antworten )
+    {
+      $( "#lblAntwort1"     ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_1 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblBezAntwort1"  ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_1 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblMyCheckBoxA1" ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_1 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      
+      $( "#lblAntwort2"     ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_2 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblBezAntwort2"  ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_2 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblMyCheckBoxA2" ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_2 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      
+      $( "#lblAntwort3"     ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_3 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblBezAntwort3"  ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_3 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblMyCheckBoxA3" ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_3 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      
+      $( "#lblAntwort4"     ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_4 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblBezAntwort4"  ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_4 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblMyCheckBoxA4" ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_4 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      
+      $( "#lblAntwort5"     ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_5 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblBezAntwort5"  ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_5 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblMyCheckBoxA5" ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_5 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      
+      $( "#lblAntwort6"     ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_6 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblBezAntwort6"  ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_6 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblMyCheckBoxA6" ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_6 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      
+      $( "#lblAntwort7"     ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_7 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblBezAntwort7"  ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_7 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblMyCheckBoxA7" ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_7 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      
+      $( "#lblAntwort8"     ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_8 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblBezAntwort8"  ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_8 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+      $( "#lblMyCheckBoxA8" ).css( 'background-color', ( pIndexAntwortControl == this.INDEX_ANTWORT_8 ? this.FARBE_AKTUELL : this.FARBE_GRAU ) );
+    }
+  }
+
+
+  appFF.prototype.anwUiCheckAntwortNachOk = function( pKnzKorrekt, pSelectorCheckBox, pSelectorBezeichnung, pSelectorText )
+  {
+    /*
+     * Setzt die angegebenen UI-Controls gemaess dem Status "pKnzKorrekt".
+     * 
+     * Ist die Antwort korrekt, werden die Controls in der Hintergrundfarbe auf GRUEN gestellt.
+     * 
+     * Ist die Antwort falsch, bestimmt sich die Hintergrundfarbe nach 
+     * dem Status der Check-Box:
+     * 
+     *  - Ist die Check-Box ausgewaehlt, wird die Hintergrundfarbe auf ROT gestellt.
+     *    (der Anwender hat die Antwort falsch ausgewaehlt)
+     * 
+     *  - Ist die Checkbox nicht ausgewaehlt, wird die Hintergrundfarbe auf GRAU gestellt
+     */
+    if ( pKnzKorrekt )
+    {
+      $( pSelectorCheckBox    ).css( 'background-color', this.FARBE_GRUEN );
+      $( pSelectorBezeichnung ).css( 'background-color', this.FARBE_GRUEN );
+      $( pSelectorText        ).css( 'background-color', this.FARBE_GRUEN );
+    }
+    else
+    {
+      if ( $( pSelectorCheckBox ).hasClass( 'cssPropChecked' ) )
+      {
+        $( pSelectorCheckBox    ).css( 'background-color', this.FARBE_ROT );
+        $( pSelectorBezeichnung ).css( 'background-color', this.FARBE_ROT );
+        $( pSelectorText        ).css( 'background-color', this.FARBE_ROT );
+      }
+      else
+      {
+        $( pSelectorCheckBox    ).css( 'background-color', this.FARBE_GRAU );
+        $( pSelectorBezeichnung ).css( 'background-color', this.FARBE_GRAU );
+        $( pSelectorText        ).css( 'background-color', this.FARBE_GRAU );
+      }
+    }
+  }
+
+
+  appFF.prototype.anwUiCheckAntwortKorrekt = function( pKnzKorrekt, pSelectorCheckBox, pSelectorBezeichnung, pSelectorText )
+  {
+    /*
+     * Hilfsfunktion fuer den Button "Loesen"
+     * 
+     * 1. Setzt alle UI-Controls auf erstmal auf "Enabled"
+     * 
+     * 2. Setzt die Vordergrundfarbe auf den normalen Zustand
+     * 
+     * 3. Setzt nach dem Wert aus dem Parameter "pKnzKorrekt" den Status 
+     *    fuer die Check-Box. 
+     * 
+     *    Setzt bei korrekten Antworten das Check-Box-Feld
+     * 
+     * 4. Setzt nach dem Wert aus dem Parameter "pKnzKorrekt" die 
+     *    Hintergrundfarbe (GRUEN oder GRAU).
+     * 
+     * 5. Setzt alle UI-Controls mit einer falschen Antwort auf "Disabled"
+     */
+    $( pSelectorCheckBox    ).prop( "disabled", false );
+    $( pSelectorBezeichnung ).prop( "disabled", false );
+    $( pSelectorText        ).prop( "disabled", false );
+
+    $( pSelectorBezeichnung ).css( 'color', this.FARBE_ENABLED_TEXT );
+    $( pSelectorText        ).css( 'color', this.FARBE_ENABLED_TEXT );
+
+    $( pSelectorCheckBox ).toggleClass( "cssPropChecked",  pKnzKorrekt );
+
+    if ( pKnzKorrekt )
+    {
+      $( pSelectorCheckBox    ).css( 'background-color', this.FARBE_GRUEN );
+      $( pSelectorBezeichnung ).css( 'background-color', this.FARBE_GRUEN );
+      $( pSelectorText        ).css( 'background-color', this.FARBE_GRUEN );
+    }
+    else
+    {
+      $( pSelectorCheckBox    ).css( 'background-color', this.FARBE_GRAU );
+      $( pSelectorBezeichnung ).css( 'background-color', this.FARBE_GRAU );
+      $( pSelectorText        ).css( 'background-color', this.FARBE_GRAU );
+
+      $( pSelectorCheckBox    ).prop( "disabled", true );
+      $( pSelectorBezeichnung ).prop( "disabled", true );
+      $( pSelectorText        ).prop( "disabled", true );
+    }
+  }
+
+
+  appFF.prototype.anwUiXAntwortEnabled = function( pKnzStatusDisabled, pSelectorCheckBox, pSelectorBezeichnung, pSelectorText )
+  {
+    /*
+     * Setzt die angegebenen UI-Controls gemaess dem Status auf Disabled oder Enabled.
+     * 
+     * Entsprechend dem Status, werden die Vorder- und Hintergrundfarbe gesetzt.
+     */
+    $( pSelectorCheckBox    ).prop( "disabled", pKnzStatusDisabled );
+    $( pSelectorBezeichnung ).prop( "disabled", pKnzStatusDisabled );
+    $( pSelectorText        ).prop( "disabled", pKnzStatusDisabled );
+
+    $( pSelectorCheckBox    ).css( 'background-color', ( pKnzStatusDisabled ? this.FARBE_DISABLED_BG : this.FARBE_ENABLED_BG ) );
+    $( pSelectorBezeichnung ).css( 'background-color', ( pKnzStatusDisabled ? this.FARBE_DISABLED_BG : this.FARBE_ENABLED_BG ) );
+    $( pSelectorText        ).css( 'background-color', ( pKnzStatusDisabled ? this.FARBE_DISABLED_BG : this.FARBE_ENABLED_BG ) );
+
+    $( pSelectorCheckBox    ).css( 'color', ( pKnzStatusDisabled ? this.FARBE_DISABLED_TEXT : this.FARBE_ENABLED_TEXT ) );
+    $( pSelectorBezeichnung ).css( 'color', ( pKnzStatusDisabled ? this.FARBE_DISABLED_TEXT : this.FARBE_ENABLED_TEXT ) );
+    $( pSelectorText        ).css( 'color', ( pKnzStatusDisabled ? this.FARBE_DISABLED_TEXT : this.FARBE_ENABLED_TEXT ) );
+  }
+
+
+  appFF.prototype.anwEnableAntworten = function()
+  {
+    /*
+     * Setzt die alle UI-Antwortcontrols auf Enabled.
+     */
+    this.anwUiXAntwortEnabled( false, "#lblMyCheckBoxA1", "#lblBezAntwort1", "#lblAntwort1" );
+    this.anwUiXAntwortEnabled( false, "#lblMyCheckBoxA2", "#lblBezAntwort2", "#lblAntwort2" );
+    this.anwUiXAntwortEnabled( false, "#lblMyCheckBoxA3", "#lblBezAntwort3", "#lblAntwort3" );
+    this.anwUiXAntwortEnabled( false, "#lblMyCheckBoxA4", "#lblBezAntwort4", "#lblAntwort4" );
+    this.anwUiXAntwortEnabled( false, "#lblMyCheckBoxA5", "#lblBezAntwort5", "#lblAntwort5" );
+    this.anwUiXAntwortEnabled( false, "#lblMyCheckBoxA6", "#lblBezAntwort6", "#lblAntwort6" );
+    this.anwUiXAntwortEnabled( false, "#lblMyCheckBoxA7", "#lblBezAntwort7", "#lblAntwort7" );
+    this.anwUiXAntwortEnabled( false, "#lblMyCheckBoxA8", "#lblBezAntwort8", "#lblAntwort8" );
+  }
+
+
+  appFF.prototype.getAnwFragenFrager = function()
+  {
+    /*
+     * Pruefung: Instanz von clsAnwFragenFrager vorhanden?
+     * 
+     * Steht die Variable "m_anw_fragen_frager" auf undefined, wird eine 
+     * neue Instanz der Klasse "clsAnwFragenFrager" erstellt.
+     */
+    if ( this.m_anw_fragen_frager == undefined )
+    {
+      this.m_anw_fragen_frager = new clsAnwFragenFrager();
+    }
+
+    /*
+     * Rueckgabe der FragenFrager-Anwendungsinstanz
+     */
+    return this.m_anw_fragen_frager;
+  }
+
+
+  appFF.prototype.anwAktuelleFrageAnzeigen = function()
+  {
+    /*
+     * Zeigt die aktuelle Frage an 
+     */
+    this.anwFrageAnzeigen();
+  }
+
+
+  appFF.prototype.anwNaechsteFrage = function( pCommand )
+  {
+    if ( this.getAnwFragenFrager().istModusFragenKatalogAnzeigen() )
+    {
+      /* 
+       * Modus Fragenkatalog anzeigen
+       * 
+       * Es wird die Funktion "anwNeueFrageAnzeigen" mit dem Command aufgerufen.
+       */
+      this.anwNeueFrageAnzeigen( pCommand );
+    }
+    else if ( this.getAnwFragenFrager().istModusAbfragen() )
+    {
+      /* 
+       *     Modus Abfragen, Command "ANZEIGE_ERSTE_FRAGE"
+       *     Modus Abfragen, Command "ANZEIGE_VORHERIGE_FRAGE"
+       * und Modus Abfragen, Command "ANZEIGE_NAECHSTE_FRAGE" und m_knz_btn_ok_ist_naechste_frage = true
+       * 
+       * m_knz_btn_ok_ist_naechste_frage = Anzeige der Korrekten Antwort
+       *                                 = Die Frage wurde schon beantwortet, es wird in diesem 
+       *                                   Zusammenhang nur noch die korrekte Antwort angezeigt. 
+       *                                   Somit muss bei TRUE nur die naechste Frage angezeigt werden.
+       */
+      if ( ( pCommand == this.ANZEIGE_ERSTE_FRAGE ) || ( pCommand == this.ANZEIGE_VORHERIGE_FRAGE ) || ( this.m_knz_btn_ok_ist_naechste_frage ) )
+      {
+        this.m_knz_btn_ok_ist_naechste_frage = false;
+
+        this.anwUiButtonText( "#btnOK", "OK" );
+
+        this.anwNeueFrageAnzeigen( pCommand );
+      }
+      else
+      {
+        /* 
+         * Modus Abfragen, Command "ANZEIGE_NAECHSTE_FRAGE" und m_knz_btn_ok_ist_naechste_frage = false
+         */
+        var knz_frage_korrekt_beantwortet = false;
+
+        var knz_frage_beantwortet = false;
+
+        var knz_antwort_1_korrekt = false;
+        var knz_antwort_2_korrekt = false;
+        var knz_antwort_3_korrekt = false;
+        var knz_antwort_4_korrekt = false;
+        var knz_antwort_5_korrekt = false;
+        var knz_antwort_6_korrekt = false;
+        var knz_antwort_7_korrekt = false;
+        var knz_antwort_8_korrekt = false;
+
+        if ( this.m_aktuelle_frage == undefined )
+        {
+          /*
+           * Aufruf der Funktion "anwNeueFrageAnzeigen" mit dem 
+           * uebergebenen Kommando.
+           */
+          this.anwNeueFrageAnzeigen( pCommand );
+
+          /*
+           * Die Kennzeichenvariable fuer die Farbmarkieung wird
+           * auf TRUE gestellt.
+           */
+          this.m_ui_knz_farbmarkierung_antworten = true;
+        }
+        else
+        {
+          /*
+           * Ermittlung, ob die Frage beantwortet wurde
+           * 
+           * Die Frage ist dann beantwortet, wenn mindestens eine Checkbox gewaehlt worden ist.
+           * 
+           * Es wird fuer jede UI-Position geprueft, ob es dort eine Antwort gibt.
+           * 
+           * Gibt es eine Antwort an der UI-Position, wird geprueft, ob die Checkbox gewaehlt worden ist.
+           */
+          knz_frage_beantwortet = false;
+
+          if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_1 ) )
+          {
+            knz_frage_beantwortet = knz_frage_beantwortet || this.anwUiIsAntwort1Checked();
+          }
+
+          if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_2 ) )
+          {
+            knz_frage_beantwortet = knz_frage_beantwortet || this.anwUiIsAntwort2Checked();
+          }
+
+          if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_3 ) )
+          {
+            knz_frage_beantwortet = knz_frage_beantwortet || this.anwUiIsAntwort3Checked();
+          }
+
+          if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_4 ) )
+          {
+            knz_frage_beantwortet = knz_frage_beantwortet || this.anwUiIsAntwort4Checked();
+          }
+
+          if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_5 ) )
+          {
+            knz_frage_beantwortet = knz_frage_beantwortet || this.anwUiIsAntwort5Checked();
+          }
+
+          if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_6 ) )
+          {
+            knz_frage_beantwortet = knz_frage_beantwortet || this.anwUiIsAntwort6Checked();
+          }
+
+          if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_7 ) )
+          {
+            knz_frage_beantwortet = knz_frage_beantwortet || this.anwUiIsAntwort7Checked();
+          }
+
+          if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_8 ) )
+          {
+            knz_frage_beantwortet = knz_frage_beantwortet || this.anwUiIsAntwort8Checked();
+          }
+
+          /*
+           * 
+           */
+          if ( knz_frage_beantwortet )
+          {
+            /*
+             * Die Anzahl der beantworteten Fragen wird um 1 erhoeht.
+             */
+            this.m_anzahl_fragen_beantwortet++;
+
+            /*
+             * Ermittlung: Einzelne Antwort an der UI-Position korrekt ausgewaehlt
+             * 
+             * Es wird bei der aktuellen Frage nachgefragt, ob die Antwort an der UI-Position korrekt ist.
+             * 
+             *    -> Ist die Antwort korrekt, muss auch die Checkbox gewaehlt worden sein
+             * 
+             *    -> Ist die Antwort falsch, darf die Checkbox nicht gewaehlt worden sein
+             * 
+             * Diese Pruefung wird fuer jede UI-Position gemacht und separat in einer Kennzeichenvariable gespeichert.
+             */
+            knz_antwort_1_korrekt = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_1 ) ? this.anwUiIsAntwort1Checked() : this.anwUiIsAntwort1Checked() == false );
+            knz_antwort_2_korrekt = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_2 ) ? this.anwUiIsAntwort2Checked() : this.anwUiIsAntwort2Checked() == false );
+            knz_antwort_3_korrekt = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_3 ) ? this.anwUiIsAntwort3Checked() : this.anwUiIsAntwort3Checked() == false );
+            knz_antwort_4_korrekt = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_4 ) ? this.anwUiIsAntwort4Checked() : this.anwUiIsAntwort4Checked() == false );
+            knz_antwort_5_korrekt = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_5 ) ? this.anwUiIsAntwort5Checked() : this.anwUiIsAntwort5Checked() == false );
+            knz_antwort_6_korrekt = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_6 ) ? this.anwUiIsAntwort6Checked() : this.anwUiIsAntwort6Checked() == false );
+            knz_antwort_7_korrekt = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_7 ) ? this.anwUiIsAntwort7Checked() : this.anwUiIsAntwort7Checked() == false );
+            knz_antwort_8_korrekt = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_8 ) ? this.anwUiIsAntwort8Checked() : this.anwUiIsAntwort8Checked() == false );
+
+            /*
+             * Ermittlung: Frage insgesamt korrekt beantwortet
+             * 
+             * Es wird in einer Kennzeichenvariable vermerkt, ob Frage korrekt beantwortet wurde.
+             * 
+             * Es muss jede einzelne Antwort an der UI-Position korrekt sein.
+             * 
+             * Alle Antwortkennzeichenfelder muessen auf TRUE stehen.
+             */
+            knz_frage_korrekt_beantwortet = knz_antwort_1_korrekt && knz_antwort_2_korrekt && knz_antwort_3_korrekt && knz_antwort_4_korrekt && knz_antwort_5_korrekt && knz_antwort_6_korrekt && knz_antwort_7_korrekt && knz_antwort_8_korrekt;
+
+            /*
+             * Zaehlervariablen aktualisieren
+             * 
+             * Wurde die Frage korrekt beantwortet, wird der Zaehler fuer die korrekt beantworteten Fragen erhoeht.
+             * 
+             * Wurde die Frage falsch beantwortet, wird der Zaehler fuer die falsch beantworteten Fragen erhoeht.
+             */
+            if ( knz_frage_korrekt_beantwortet )
+            {
+              this.m_anzahl_korrekt_beantwortet++;
+            }
+            else
+            {
+              this.m_anzahl_falsch_beantwortet++;
+            }
+
+            /*
+             * Zaehlervariablen in der Anwendungsklasse aktualisieren
+             */
+            this.getAnwFragenFrager().updateZaehler( knz_frage_beantwortet, knz_frage_korrekt_beantwortet, ! knz_frage_korrekt_beantwortet );
+
+            /*
+             * Ermittlung: Antwort nach der normalen Reihenfolge korrekt ausgewaehlt
+             * 
+             * Es werden die Kennzeichenfelder ermittelt, welche Antwort nach der originalen Reihenfolge nach beantwortet wurden.
+             * 
+             * Es wird nicht nach UI-Position, sondern nach Fragen-Position geschaut.
+             * 
+             * Dieses Vorgehen sorgt dafuer, dass eine Auswahl von z.B. Antwort A erhalten bleibt, wenn in 
+             * den Fragen vor und zurueck gegangen wird. 
+             * 
+             * Da die Antwortreihenfolge umgestellt werden kann, darf hier nicht nach UI-Positionen gegangen werden.
+             */
+            var knz_antwort_a_checked = this.m_aktuelle_frage.istAntwortAChecked( this.anwUiIsAntwort1Checked(), this.anwUiIsAntwort2Checked(), this.anwUiIsAntwort3Checked(), this.anwUiIsAntwort4Checked(), this.anwUiIsAntwort5Checked(), this.anwUiIsAntwort6Checked(), this.anwUiIsAntwort7Checked(), this.anwUiIsAntwort8Checked() );
+            var knz_antwort_b_checked = this.m_aktuelle_frage.istAntwortBChecked( this.anwUiIsAntwort1Checked(), this.anwUiIsAntwort2Checked(), this.anwUiIsAntwort3Checked(), this.anwUiIsAntwort4Checked(), this.anwUiIsAntwort5Checked(), this.anwUiIsAntwort6Checked(), this.anwUiIsAntwort7Checked(), this.anwUiIsAntwort8Checked() );
+            var knz_antwort_c_checked = this.m_aktuelle_frage.istAntwortCChecked( this.anwUiIsAntwort1Checked(), this.anwUiIsAntwort2Checked(), this.anwUiIsAntwort3Checked(), this.anwUiIsAntwort4Checked(), this.anwUiIsAntwort5Checked(), this.anwUiIsAntwort6Checked(), this.anwUiIsAntwort7Checked(), this.anwUiIsAntwort8Checked() );
+            var knz_antwort_d_checked = this.m_aktuelle_frage.istAntwortDChecked( this.anwUiIsAntwort1Checked(), this.anwUiIsAntwort2Checked(), this.anwUiIsAntwort3Checked(), this.anwUiIsAntwort4Checked(), this.anwUiIsAntwort5Checked(), this.anwUiIsAntwort6Checked(), this.anwUiIsAntwort7Checked(), this.anwUiIsAntwort8Checked() );
+            var knz_antwort_e_checked = this.m_aktuelle_frage.istAntwortEChecked( this.anwUiIsAntwort1Checked(), this.anwUiIsAntwort2Checked(), this.anwUiIsAntwort3Checked(), this.anwUiIsAntwort4Checked(), this.anwUiIsAntwort5Checked(), this.anwUiIsAntwort6Checked(), this.anwUiIsAntwort7Checked(), this.anwUiIsAntwort8Checked() );
+            var knz_antwort_f_checked = this.m_aktuelle_frage.istAntwortFChecked( this.anwUiIsAntwort1Checked(), this.anwUiIsAntwort2Checked(), this.anwUiIsAntwort3Checked(), this.anwUiIsAntwort4Checked(), this.anwUiIsAntwort5Checked(), this.anwUiIsAntwort6Checked(), this.anwUiIsAntwort7Checked(), this.anwUiIsAntwort8Checked() );
+            var knz_antwort_g_checked = this.m_aktuelle_frage.istAntwortGChecked( this.anwUiIsAntwort1Checked(), this.anwUiIsAntwort2Checked(), this.anwUiIsAntwort3Checked(), this.anwUiIsAntwort4Checked(), this.anwUiIsAntwort5Checked(), this.anwUiIsAntwort6Checked(), this.anwUiIsAntwort7Checked(), this.anwUiIsAntwort8Checked() );
+            var knz_antwort_h_checked = this.m_aktuelle_frage.istAntwortHChecked( this.anwUiIsAntwort1Checked(), this.anwUiIsAntwort2Checked(), this.anwUiIsAntwort3Checked(), this.anwUiIsAntwort4Checked(), this.anwUiIsAntwort5Checked(), this.anwUiIsAntwort6Checked(), this.anwUiIsAntwort7Checked(), this.anwUiIsAntwort8Checked() );
+
+            /*
+             * Die Kennzeichen, welche Antwort ausgewaehlt worden war, wird an die Fragensitzung weitergegeben.
+             *
+             * Das sorgt dafuer, dass beim naechsten erscheinen dieser Frage, die einmal ausgewaehlten 
+             * Antworten wieder ausgewaehlt angezeigt werden koennen.
+             */
+            this.getAnwFragenFrager().updateKnzGewaehlt( knz_antwort_a_checked, knz_antwort_b_checked, knz_antwort_c_checked, knz_antwort_d_checked, knz_antwort_e_checked, knz_antwort_f_checked, knz_antwort_g_checked, knz_antwort_h_checked );
+          }
+          else
+          {
+            /*
+             * Wurde die Frage nicht beantwortet, wird der Zaehler fuer die nicht beantworteten Fragen erhoeht
+             */
+            this.m_anzahl_fragen_nicht_beantwortet++;
+
+            this.getAnwFragenFrager().updateZaehler( knz_frage_beantwortet, false, false );
+
+            this.getAnwFragenFrager().updateKnzGewaehlt( false, false, false, false, false, false, false, false );
+          }
+
+          /*
+           * Es wird der Zaehler fuer die "Anzahl der angezeigten Fragen" erhoeht.
+           */
+          this.m_anzahl_angezeigt++;
+
+          /*
+           * Prozentrechnung 
+           * 
+           * Ermittlung der Prozentwerte fuer "Anzahl falsch beantwortet" und "Anazhl korrekt beantwortet"
+           */
+          this.m_anzahl_prozent_korrekt = ( 100.0 * this.m_anzahl_korrekt_beantwortet ) / ( this.m_anzahl_fragen_beantwortet );
+
+          this.m_anzahl_prozent_falsch  = ( 100.0 * this.m_anzahl_falsch_beantwortet  ) / ( this.m_anzahl_fragen_beantwortet );
+
+          /*
+           * Zaehlerwerte in die UI-Controls schreiben
+           */
+          this.anwUiSetAnzahlAngezeigt( this.m_anzahl_angezeigt );
+          this.anwUiSetAnzahlFragenBeantwortet( this.m_anzahl_fragen_beantwortet );
+          this.anwUiSetAnzahlFragenNichtBeantwortet( this.m_anzahl_fragen_nicht_beantwortet );
+          this.anwUiSetAnzahlFalschBeantwortet( this.m_anzahl_falsch_beantwortet );
+          this.anwUiSetAnzahlKorrektBeantwortet( this.m_anzahl_korrekt_beantwortet );
+          this.anwUiSetAnzahlProzentKorrekt( this.m_anzahl_prozent_korrekt );
+          this.anwUiSetAnzahlProzentFalsch( this.m_anzahl_prozent_falsch );
+
+          /*
+           * Pruefung: Weiter zur naechsten Frage?
+           * 
+           * Sind alle Auswertungen zur aktuellen Frage erledigt, wird geprueft, 
+           * ob sofort zur naechsten Frage weitergeschaltet wird oder nicht.
+           * 
+           * Soll die korrekte Antwort nach einer Frage NICHT angezeigt werden, wird zur naechsten Frage verzweigt.
+           * 
+           * Soll die korrekte Antwort angezeigt werden, folgen weitere Pruefungen:
+           * 
+           * - wurde die Frage falsch beantwortet wird die korrekte Antwort(en) angezeigt
+           * 
+           * - wurde die Frage beantwortet und das korrekt dann wird das Kennzeichen 
+           *   "m_knz_korrekt_beantwortet_weiter" ausgewertet. 
+           * 
+           *   - Steht diese Variable auf TRUE, wird zur naechsten Frage verzweigt.
+           *     Der Anwender moechte bei korrekt beantworteten Fragen gleich weiter
+           * 
+           *   - Steht diese Variable auf FALSE, werden die korrekten Antworten angezeigt
+           *     Die Frage an sich ist schon korrekt beantwortet, es werden aber alle 
+           *     korrekten Antworten gruen hinterlegt.
+           */
+          if ( this.m_knz_korrekte_antwort_anzeigen )
+          {
+            if ( knz_frage_beantwortet && knz_frage_korrekt_beantwortet && this.m_knz_korrekt_beantwortet_weiter )
+            {
+              this.anwNeueFrageAnzeigen( pCommand );
+            }
+            else
+            {
+              /*
+               * Die Kennzeichenvariable fuer die Farbmarkieung wird
+               * auf FALSE gestellt, da jetzt die Frage im geloesten
+               * Zustand angezeigt wird.
+               */
+              this.m_ui_knz_farbmarkierung_antworten = false;
+
+              this.anwUiCheckAntwortNachOk( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_1 ), "#lblMyCheckBoxA1", "#lblBezAntwort1", "#lblAntwort1" );
+              this.anwUiCheckAntwortNachOk( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_2 ), "#lblMyCheckBoxA2", "#lblBezAntwort2", "#lblAntwort2" );
+              this.anwUiCheckAntwortNachOk( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_3 ), "#lblMyCheckBoxA3", "#lblBezAntwort3", "#lblAntwort3" );
+              this.anwUiCheckAntwortNachOk( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_4 ), "#lblMyCheckBoxA4", "#lblBezAntwort4", "#lblAntwort4" );
+              this.anwUiCheckAntwortNachOk( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_5 ), "#lblMyCheckBoxA5", "#lblBezAntwort5", "#lblAntwort5" );
+              this.anwUiCheckAntwortNachOk( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_6 ), "#lblMyCheckBoxA6", "#lblBezAntwort6", "#lblAntwort6" );
+              this.anwUiCheckAntwortNachOk( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_7 ), "#lblMyCheckBoxA7", "#lblBezAntwort7", "#lblAntwort7" );
+              this.anwUiCheckAntwortNachOk( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_8 ), "#lblMyCheckBoxA8", "#lblBezAntwort8", "#lblAntwort8" );
+
+              /*
+               * Der OK-Button bekommt jetzt eine andere Funktion.
+               *
+               * Mit dem naechsten Click auf den OK-Button wird zur naechsten Frage gewechselt.
+               * 
+               * Die Kennzeichenvariable "m_knz_btn_ok_ist_naechste_frage" wird auf TRUE gestellt.
+               * 
+               * Die Buttonbeschriftung wird geaendert.
+               */
+              this.m_knz_btn_ok_ist_naechste_frage = true;
+
+              this.anwUiButtonText( "#btnOK", "naechste Frage" );
+            }
+          }
+          else
+          {
+            this.anwNeueFrageAnzeigen( pCommand );
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
+
+  appFF.prototype.anwNeueFrageAnzeigen = function( pCommand )
+  {
+    /*
+     * Aktionen neue Frage
+     *
+     * Soll eine neue Frage angezeigt werden, muessen folgende 
+     * Aktionen gemacht werden:
+     * 
+     * - Reset der Antwortpositionen bei jetzt noch aktuellen Frage
+     * - In der Anwendung den Datensatzzeiger veraendern
+     * - neue aktuelle Frage setzen
+     * - Reset auf Steuer- und Kennzeichenfelder 
+     * - Freischaltung von Buttons
+     * - evtl. Umstellung der Antwortreihenfolge
+     */
+
+    /*
+     * Reset Ui-Antwortpositionen
+     * Ist eine aktuelle Frage vorhanden, werden in dieser Frage die
+     * UI-Antwortpositionen wieder in den Normalzustand gebracht,
+     * bevor die neue Frage geladen wird.
+     */
+    if ( this.m_aktuelle_frage != undefined )
+    {
+      this.m_aktuelle_frage.resetAntwortIndexPosition();
+    }
+
+    /*
+     * Kommandoauswertung
+     * 
+     * Mit dem Parameter "pCommand" wird angegeben, wie der 
+     * Datensatzzeiger veraendert werden soll:
+     * 
+     * ANZEIGE_ERSTE_FRAGE     = gehe zur ersten Frage 
+     * ANZEIGE_NAECHSTE_FRAGE  = gehe zur naechsten Frage
+     * ANZEIGE_VORHERIGE_FRAGE = gehe zur vorigen Frage
+     * ANZEIGE_LETZTE_FRAGE    = gehe zur letzten Frage
+     * 
+     * Je nach Kommando wird die entsprechende Move-Funktion in der 
+     * Anwendungsklasse aufgerufen, welche je nach Anzeigemodus den 
+     * Datensatz-Zeiger im Fragenkatalog oder in der Fragensitzung 
+     * veraendert.
+     */
+    switch ( pCommand )
+    {
+      case this.ANZEIGE_ERSTE_FRAGE :
+     
+        this.getAnwFragenFrager().moveFirst();
+
+        break;
+
+      case this.ANZEIGE_NAECHSTE_FRAGE :
+
+        this.getAnwFragenFrager().moveNext();
+
+        break;
+
+      case this.ANZEIGE_VORHERIGE_FRAGE :
+
+        this.getAnwFragenFrager().movePrevious();
+
+        break;
+
+      case this.ANZEIGE_LETZTE_FRAGE :
+
+        this.getAnwFragenFrager().moveLast();
+
+        break;
+    }
+
+    /*
+     * Neue aktuelle Frage 
+     * Aus der Anwendungsklasse wird die aktuelle Frage geholt und der 
+     * Variablen "m_aktuelle_frage" zugewiesen.
+     */
+    this.m_aktuelle_frage = this.getAnwFragenFrager().getAktFrage();
+
+    /*
+     * Im Statustext die neue Fragen-ID anzeigen.
+     */
+    this.anwUiSetStatusText( this.getAnwFragenFrager().getTextStatusFragenIndex() );
+
+    /*
+     * Die Antwortfelder werden fuer eine Auswahl wieder freigeschaltet
+     */
+    this.anwEnableAntworten();
+
+    /*
+     * Der Button "OK" bekommt wieder die Bezeichnung "OK"
+     */
+    this.anwUiButtonText( "#btnOK", "OK" );
+
+    /*
+     * Die Buttons "Loesen" und "50 % Joker" werden freigeschaltet. 
+     */
+    $( "#btnLoesen"    ).prop( "disabled", false );
+
+    $( "#btn5050Joker" ).prop( "disabled", false );
+
+    /*
+     * Die Kennzeichenvariable "m_knz_btn_ok_ist_naechste_frage" wird
+     * auf FALSE gestellt, da der Button OK jetzt keine Sonderrolle 
+     * mehr hat.
+     */
+    this.m_knz_btn_ok_ist_naechste_frage = false;
+
+    /*
+     * Die Kennzeichenvariable "this.m_ui_knz_farbmarkierung_antworten" wird
+     * auf TRUE gestellt, damit bei einem Mouse-Move-Ereignis die 
+     * Antwortfelder wieder farbig markiert werden.
+     */
+    this.m_ui_knz_farbmarkierung_antworten = true;
+
+    /*
+     * Die Kennzeichenvariable "m_ui_knz_loesen_moeglich" wird
+     * auf TRUE gestellt, da fuer die neue Frage ein Loesen 
+     * wieder moeglich ist.
+     */
+    this.m_ui_knz_loesen_moeglich = true;
+
+    /*
+     * "50 % Joker" wurde noch nicht durchgefuehrt. 
+     */
+    this.m_ui_knz_50_50_joker_durchgefuehrt = false;
+
+    /*
+     * "50 % Joker" ist moeglich.
+     */
+    this.m_ui_knz_50_50_joker_moeglich = true;
+
+    /*
+     * Umstellung Antworten
+     * Ist das Kennzeichen fuer die Antwortumstellung gesetzt, werden in 
+     * der aktuellen Frage die Ui-Antwortpositionen neu vergeben.
+     */
+    if ( this.m_knz_antwort_reihenfolge_umstellen )
+    {
+      if ( this.m_aktuelle_frage != undefined )
+      {
+        this.m_aktuelle_frage.startAntwortReihenfolgeUmstellen();
+      }
+    }
+
+    /*
+     * Aufruf der Funktion zum anzeigen der Frage
+     */
+    this.anwFrageAnzeigen();
+  }
+
+
+  appFF.prototype.anwFrageAnzeigen = function()
+  {
+    try
+    {
+      /*
+       * Pruefung: Frage zum anzeigen vorhanden ?
+       */
+      if ( this.m_aktuelle_frage == undefined )
+      {
+        /*
+         * Ist die aktuelle Frage "this.m_aktuelle_frage" gleich "undefined",
+         * werden Standard-Texte in den UI-Controls ausgegeben.
+         */
+
+        $( "#lblFrageNr" ).text( "0" );
+
+        $( "#lblFrage1" ).text( "Keine Frage zum Anzeigen vorhanden!" );
+
+        $( "#lblAntwort1" ).text( "Antwort A" );
+        $( "#lblAntwort2" ).text( "Antwort B" );
+        $( "#lblAntwort3" ).text( "Antwort C" );
+        $( "#lblAntwort4" ).text( "Antwort D" );
+        $( "#lblAntwort5" ).text( "Antwort E" );
+        $( "#lblAntwort6" ).text( "Antwort F" );
+        $( "#lblAntwort7" ).text( "Antwort G" );
+        $( "#lblAntwort8" ).text( "Antwort H" );
+
+        $( "#lblBezAntwort1" ).text( "a)" );
+        $( "#lblBezAntwort2" ).text( "b)" );
+        $( "#lblBezAntwort3" ).text( "c)" );
+        $( "#lblBezAntwort4" ).text( "d)" );
+        $( "#lblBezAntwort5" ).text( "e)" );
+        $( "#lblBezAntwort6" ).text( "f)" );
+        $( "#lblBezAntwort7" ).text( "g)" );
+        $( "#lblBezAntwort8" ).text( "h)" );
+
+        $( "#lblFrage2" ).text( "-- Fragenkatalog laden --" );
+      }
+      else
+      {
+        /*
+         * Steuerung: Anzeige Controls Checkbox und Antwortentext nach dem vorhanden sein einer Antwort an der UI-Position
+         *
+         * Ist an der Position eine Antwort vorhanden, werden die UI-Controls eingeblendet.
+         *
+         * Ist an der Position keine Antwort vorhanden, werden die UI-Controls ausgeblendet.
+         * 
+         * Die Ermittlungsfunktion "hasUiPositionAntwort" beruecksichtigt hierbei auch
+         * das Kennzeichen, ob die Antwort "aktiv" ist.
+         * 
+         */
+        if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_1 ) ) { $( "#lblMyCheckBoxA1" ).show(); $( "#lblAntwort1" ).show(); } else { $( "#lblMyCheckBoxA1" ).hide(); $( "#lblAntwort1" ).hide(); }
+        if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_2 ) ) { $( "#lblMyCheckBoxA2" ).show(); $( "#lblAntwort2" ).show(); } else { $( "#lblMyCheckBoxA2" ).hide(); $( "#lblAntwort2" ).hide(); }
+        if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_3 ) ) { $( "#lblMyCheckBoxA3" ).show(); $( "#lblAntwort3" ).show(); } else { $( "#lblMyCheckBoxA3" ).hide(); $( "#lblAntwort3" ).hide(); }
+        if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_4 ) ) { $( "#lblMyCheckBoxA4" ).show(); $( "#lblAntwort4" ).show(); } else { $( "#lblMyCheckBoxA4" ).hide(); $( "#lblAntwort4" ).hide(); }
+        if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_5 ) ) { $( "#lblMyCheckBoxA5" ).show(); $( "#lblAntwort5" ).show(); } else { $( "#lblMyCheckBoxA5" ).hide(); $( "#lblAntwort5" ).hide(); }
+        if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_6 ) ) { $( "#lblMyCheckBoxA6" ).show(); $( "#lblAntwort6" ).show(); } else { $( "#lblMyCheckBoxA6" ).hide(); $( "#lblAntwort6" ).hide(); }
+        if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_7 ) ) { $( "#lblMyCheckBoxA7" ).show(); $( "#lblAntwort7" ).show(); } else { $( "#lblMyCheckBoxA7" ).hide(); $( "#lblAntwort7" ).hide(); }
+        if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_8 ) ) { $( "#lblMyCheckBoxA8" ).show(); $( "#lblAntwort8" ).show(); } else { $( "#lblMyCheckBoxA8" ).hide(); $( "#lblAntwort8" ).hide(); }
+
+        /*
+         * Kennzeichenermittlung: Anzeige Antwort-Text nach Kennzeichenfeldern
+         * 
+         * Es gibt 8 Kennzeichenfelder, welche angeben, ob der Antworttext 
+         * an einer UI-Positon angezeigt werden soll oder nicht.
+         *
+         * Diese Kennzeichenfelder sind von dem tatsaechlichen vorhandensein 
+         * einer Antwort an der UI-Position unabhaengig.
+         *
+         * Auswertung der Kennzeichen: Korrekte Antwort anzeigen 
+         *                             Falsche Antwort anzeigen
+         *
+         * Es wird bei jeder UI-Position angefragt, ob die Antwort auf der Position korrekt ist
+         * 
+         *     - Ist die Antwort an der UI-Position korrekt, haengt die Anzeige der Antwort 
+         *       vom Kennzeichenfeld "m_knz_antwort_text_korrekt_anzeigen" ab.
+         * 
+         *     - Ist die Antwort an der UI-Position falsch, haengt die Anzeige der Antwort 
+         *       vom Kennzeichenfeld "m_knz_antwort_text_falsch_anzeigen" ab.
+         * 
+         * Die beiden Kennzeichenfelder "m_knz_antwort_text_korrekt_anzeigen" und "m_knz_antwort_text_falsch_anzeigen"
+         * stehen normalerweise auf TRUE, welches dazu fuehren wuerde, dass alle Antworten angezeigt wuerden.
+         * 
+         * Diese beiden Felder koennen aber auch auf FALSE gesetzt werden, was dann dazu fuehrt, dass 
+         * trotz einer Antwort auf der UI-Position, die Antwort eben nicht angezeigt wuerde. 
+         */
+        var knz_antwort_text_1_anzeigen = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_1 ) ? this.m_knz_antwort_text_korrekt_anzeigen : this.m_knz_antwort_text_falsch_anzeigen );
+        var knz_antwort_text_2_anzeigen = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_2 ) ? this.m_knz_antwort_text_korrekt_anzeigen : this.m_knz_antwort_text_falsch_anzeigen );
+        var knz_antwort_text_3_anzeigen = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_3 ) ? this.m_knz_antwort_text_korrekt_anzeigen : this.m_knz_antwort_text_falsch_anzeigen );
+        var knz_antwort_text_4_anzeigen = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_4 ) ? this.m_knz_antwort_text_korrekt_anzeigen : this.m_knz_antwort_text_falsch_anzeigen );
+        var knz_antwort_text_5_anzeigen = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_5 ) ? this.m_knz_antwort_text_korrekt_anzeigen : this.m_knz_antwort_text_falsch_anzeigen );
+        var knz_antwort_text_6_anzeigen = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_6 ) ? this.m_knz_antwort_text_korrekt_anzeigen : this.m_knz_antwort_text_falsch_anzeigen );
+        var knz_antwort_text_7_anzeigen = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_7 ) ? this.m_knz_antwort_text_korrekt_anzeigen : this.m_knz_antwort_text_falsch_anzeigen );
+        var knz_antwort_text_8_anzeigen = ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_8 ) ? this.m_knz_antwort_text_korrekt_anzeigen : this.m_knz_antwort_text_falsch_anzeigen );
+
+        /*
+         * Anzeige Fragetext 1 und 2, sowie von der Fragen-Nummer
+         * 
+         * Die Anzeige erfolgt in Abhaengigkeit zu den gesetzten Kennzeichenfeldern dieser Klasse
+         */
+        this.anwUiSetText( "#lblFrageNr", this.m_knz_fragen_nummer_anzeigen ? this.m_aktuelle_frage.getNummer() : "" );
+        this.anwUiSetText( "#lblFrage1",  this.m_knz_fragen_text_anzeigen   ? this.m_aktuelle_frage.getText1()  : "" );
+        this.anwUiSetText( "#lblFrage2",  this.m_knz_fragen_text_anzeigen   ? this.m_aktuelle_frage.getText2()  : "" );
+
+        /*
+         * Anzeige Antworttexte in Abhaengigkeit des Kennzeichens fuer die Anzeige an der UI-Position
+         * 
+         * Ist an einer UI-Position keine Antwort vorhanden, wird kein Antworttext zurueckgeliefert.
+         */
+        this.anwUiSetText( "#lblAntwort1", knz_antwort_text_1_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortText( this.INDEX_ANTWORT_1 ) : "" );
+        this.anwUiSetText( "#lblAntwort2", knz_antwort_text_2_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortText( this.INDEX_ANTWORT_2 ) : "" );
+        this.anwUiSetText( "#lblAntwort3", knz_antwort_text_3_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortText( this.INDEX_ANTWORT_3 ) : "" );
+        this.anwUiSetText( "#lblAntwort4", knz_antwort_text_4_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortText( this.INDEX_ANTWORT_4 ) : "" );
+        this.anwUiSetText( "#lblAntwort5", knz_antwort_text_5_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortText( this.INDEX_ANTWORT_5 ) : "" );
+        this.anwUiSetText( "#lblAntwort6", knz_antwort_text_6_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortText( this.INDEX_ANTWORT_6 ) : "" );
+        this.anwUiSetText( "#lblAntwort7", knz_antwort_text_7_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortText( this.INDEX_ANTWORT_7 ) : "" );
+        this.anwUiSetText( "#lblAntwort8", knz_antwort_text_8_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortText( this.INDEX_ANTWORT_8 ) : "" );
+
+        /*
+         * Anzeige Antwortbezeichnung nach dem Kennzeichen, ob die Antwort an der UI-Positon angezeigt werden soll
+         */
+        this.anwUiSetText( "#lblBezAntwort1", this.m_knz_antwort_bezeichnung_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortBez( this.INDEX_ANTWORT_1 ) : "" );
+        this.anwUiSetText( "#lblBezAntwort2", this.m_knz_antwort_bezeichnung_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortBez( this.INDEX_ANTWORT_2 ) : "" );
+        this.anwUiSetText( "#lblBezAntwort3", this.m_knz_antwort_bezeichnung_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortBez( this.INDEX_ANTWORT_3 ) : "" );
+        this.anwUiSetText( "#lblBezAntwort4", this.m_knz_antwort_bezeichnung_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortBez( this.INDEX_ANTWORT_4 ) : "" );
+        this.anwUiSetText( "#lblBezAntwort5", this.m_knz_antwort_bezeichnung_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortBez( this.INDEX_ANTWORT_5 ) : "" );
+        this.anwUiSetText( "#lblBezAntwort6", this.m_knz_antwort_bezeichnung_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortBez( this.INDEX_ANTWORT_6 ) : "" );
+        this.anwUiSetText( "#lblBezAntwort7", this.m_knz_antwort_bezeichnung_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortBez( this.INDEX_ANTWORT_7 ) : "" );
+        this.anwUiSetText( "#lblBezAntwort8", this.m_knz_antwort_bezeichnung_anzeigen ? this.m_aktuelle_frage.getUiPositionAntwortBez( this.INDEX_ANTWORT_8 ) : "" );
+  
+        /*
+         * Abschnitt: Vorauswahl der Checkboxen
+         */
+        if ( ( this.getAnwFragenFrager().istModusFragenKatalogAnzeigen() ) && ( this.m_knz_korrekte_antwort_anzeigen ) )
+        {
+          /*
+           * Modus Fragenkatalog anzeigen und korrekte Antworten markieren eingeschaltet.
+           * 
+           * Es wird bei jeder UI-Position ermittelt, ob die dort angezeigte 
+           * Antwort korrekt ist. Mit diesem Wert wird die Funktion fuer 
+           * die Checkboxmarkierung aufgerufen.
+           */
+          this.anwUiSetAntwort1Checked( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_1 ) );
+          this.anwUiSetAntwort2Checked( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_2 ) );
+          this.anwUiSetAntwort3Checked( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_3 ) );
+          this.anwUiSetAntwort4Checked( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_4 ) );
+          this.anwUiSetAntwort5Checked( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_5 ) );
+          this.anwUiSetAntwort6Checked( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_6 ) );
+          this.anwUiSetAntwort7Checked( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_7 ) );
+          this.anwUiSetAntwort8Checked( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_8 ) );
+        }
+        else if ( this.getAnwFragenFrager().istModusAbfragen() )
+        {
+          /*
+           * Modus Abfragen 
+           * 
+           * Im Modus "Abfragen" werden die einmal gewaehlten Checkbox-Auswahlen wieder ausgewaehlt.
+           * 
+           * Es geht darum, dass bei einer Vertauschung der Antworten, die einmal 
+           * gewaehlte Antwort erhalten bleibt.
+           * 
+           * Es wird bei der Fragensitzung abgefragt, welche Antworten beim letzten 
+           * anzeigen der Frage ausgewaehlt worden waren. Diese Information wird 
+           * in 8 Kennzeichenfeldern gespeichert. 
+           */
+          var knz_antwort_a_checked = this.getAnwFragenFrager().getKnzAntwortAGewaehlt();
+          var knz_antwort_b_checked = this.getAnwFragenFrager().getKnzAntwortBGewaehlt();
+          var knz_antwort_c_checked = this.getAnwFragenFrager().getKnzAntwortCGewaehlt();
+          var knz_antwort_d_checked = this.getAnwFragenFrager().getKnzAntwortDGewaehlt();
+          var knz_antwort_e_checked = this.getAnwFragenFrager().getKnzAntwortEGewaehlt();
+          var knz_antwort_f_checked = this.getAnwFragenFrager().getKnzAntwortFGewaehlt();
+          var knz_antwort_g_checked = this.getAnwFragenFrager().getKnzAntwortGGewaehlt();
+          var knz_antwort_h_checked = this.getAnwFragenFrager().getKnzAntwortHGewaehlt();
+
+          /*
+           * Setzen der einmal ausgewaehlten Antwort(en).
+           * 
+           * Es wird die Funktion "istUiPositionChecked" der Frage aufgerufen.
+           * 
+           * Der Funktion werden alle 8 Kennzeichenfelder mitgegeben, welche angeben, ob 
+           * Antwort A bis H beim letzten anzeigen der Frage ausgewaehlt worden waren.
+           * 
+           * Die Funktion "istUiPositionChecked" ermittelt, welche Antwort auf der 
+           * Position X steht und gibt die entsprechende Kennzeichenvariable zurueck.
+           * 
+           * Beispiel:
+           *  - An UI-Position 4 wird die Antwort B angezeigt
+           *  - Dann muss die Kennzeichenvariable fuer Antwort B "knz_antwort_b_checked"
+           *    auf TRUE stehen, damit die Antwort markiert wird.
+           */
+          this.anwUiSetAntwort1Checked( this.m_aktuelle_frage.istUiPositionChecked( this.INDEX_ANTWORT_1, knz_antwort_a_checked, knz_antwort_b_checked, knz_antwort_c_checked, knz_antwort_d_checked, knz_antwort_e_checked, knz_antwort_f_checked, knz_antwort_g_checked, knz_antwort_h_checked ) );
+          this.anwUiSetAntwort2Checked( this.m_aktuelle_frage.istUiPositionChecked( this.INDEX_ANTWORT_2, knz_antwort_a_checked, knz_antwort_b_checked, knz_antwort_c_checked, knz_antwort_d_checked, knz_antwort_e_checked, knz_antwort_f_checked, knz_antwort_g_checked, knz_antwort_h_checked ) );
+          this.anwUiSetAntwort3Checked( this.m_aktuelle_frage.istUiPositionChecked( this.INDEX_ANTWORT_3, knz_antwort_a_checked, knz_antwort_b_checked, knz_antwort_c_checked, knz_antwort_d_checked, knz_antwort_e_checked, knz_antwort_f_checked, knz_antwort_g_checked, knz_antwort_h_checked ) );
+          this.anwUiSetAntwort4Checked( this.m_aktuelle_frage.istUiPositionChecked( this.INDEX_ANTWORT_4, knz_antwort_a_checked, knz_antwort_b_checked, knz_antwort_c_checked, knz_antwort_d_checked, knz_antwort_e_checked, knz_antwort_f_checked, knz_antwort_g_checked, knz_antwort_h_checked ) );
+          this.anwUiSetAntwort5Checked( this.m_aktuelle_frage.istUiPositionChecked( this.INDEX_ANTWORT_5, knz_antwort_a_checked, knz_antwort_b_checked, knz_antwort_c_checked, knz_antwort_d_checked, knz_antwort_e_checked, knz_antwort_f_checked, knz_antwort_g_checked, knz_antwort_h_checked ) );
+          this.anwUiSetAntwort6Checked( this.m_aktuelle_frage.istUiPositionChecked( this.INDEX_ANTWORT_6, knz_antwort_a_checked, knz_antwort_b_checked, knz_antwort_c_checked, knz_antwort_d_checked, knz_antwort_e_checked, knz_antwort_f_checked, knz_antwort_g_checked, knz_antwort_h_checked ) );
+          this.anwUiSetAntwort7Checked( this.m_aktuelle_frage.istUiPositionChecked( this.INDEX_ANTWORT_7, knz_antwort_a_checked, knz_antwort_b_checked, knz_antwort_c_checked, knz_antwort_d_checked, knz_antwort_e_checked, knz_antwort_f_checked, knz_antwort_g_checked, knz_antwort_h_checked ) );
+          this.anwUiSetAntwort8Checked( this.m_aktuelle_frage.istUiPositionChecked( this.INDEX_ANTWORT_8, knz_antwort_a_checked, knz_antwort_b_checked, knz_antwort_c_checked, knz_antwort_d_checked, knz_antwort_e_checked, knz_antwort_f_checked, knz_antwort_g_checked, knz_antwort_h_checked ) );
+        }
+        else
+        {
+          /*
+           * ELSE-Zweig
+           * Generell werden die Antworten auf "nicht gewaehlt" gestellt, wenn der Modus
+           * ein anderer als "Fragenkatalog anzeigen" oder "Abfragen" ist.
+           */
+          this.anwUiSetAntwort1Checked( false );
+          this.anwUiSetAntwort2Checked( false );
+          this.anwUiSetAntwort3Checked( false );
+          this.anwUiSetAntwort4Checked( false );
+          this.anwUiSetAntwort5Checked( false );
+          this.anwUiSetAntwort6Checked( false );
+          this.anwUiSetAntwort7Checked( false );
+          this.anwUiSetAntwort8Checked( false );
+        }
+      } // If UI-Frage gesetzt
+    }
+    catch ( err_inst )
+    {
+      // Fehlerbehandlung
+    }
+  }
+  
+
+  appFF.prototype.anwUiKorrekteAntwortAnzeigen = function()
+  {
+    /*
+     * Ist keine aktuelle Frage vorhanden, kann nichts geloest werden.
+     * 
+     * Die Funktion wird verlassen.
+     */
+    if ( this.m_aktuelle_frage == undefined )
+    {
+      return;
+    }
+
+    /*
+     * Pruefung: Loesen moeglich ?
+     * Wurde die aktuelle Frage schon geloest, wird diese kein
+     * weiteres mal geloest.
+     */
+    if ( this.m_ui_knz_loesen_moeglich )
+    {
+      /*
+       * Das Kennzeichenfeld fuer "Frage Loesen" wird auf FALSE gesetzt.
+       */
+      this.m_ui_knz_loesen_moeglich = false;
+
+      /*
+       * Das Kennzeichenfeld fuer den "50 % Joker" wird auf FALSE gesetzt.
+       */
+      this.m_ui_knz_50_50_joker_moeglich = false;
+
+      /*
+       * Fuer jede UI-Position wird bei der Frage nachgefragt, ob die 
+       * Antwort an der UI-Position korrekt ist.
+       *
+       * Mit dem Ergebnis der Funktion wird die Funktion fuer das 
+       * Markieren der UI-Antworten aufgerufen, welche dann die 
+       * Antworten farbig markiert.
+       */
+      this.anwUiCheckAntwortKorrekt( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_1 ), "#lblMyCheckBoxA1", "#lblBezAntwort1", "#lblAntwort1" );
+      this.anwUiCheckAntwortKorrekt( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_2 ), "#lblMyCheckBoxA2", "#lblBezAntwort2", "#lblAntwort2" );
+      this.anwUiCheckAntwortKorrekt( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_3 ), "#lblMyCheckBoxA3", "#lblBezAntwort3", "#lblAntwort3" );
+      this.anwUiCheckAntwortKorrekt( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_4 ), "#lblMyCheckBoxA4", "#lblBezAntwort4", "#lblAntwort4" );
+      this.anwUiCheckAntwortKorrekt( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_5 ), "#lblMyCheckBoxA5", "#lblBezAntwort5", "#lblAntwort5" );
+      this.anwUiCheckAntwortKorrekt( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_6 ), "#lblMyCheckBoxA6", "#lblBezAntwort6", "#lblAntwort6" );
+      this.anwUiCheckAntwortKorrekt( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_7 ), "#lblMyCheckBoxA7", "#lblBezAntwort7", "#lblAntwort7" );
+      this.anwUiCheckAntwortKorrekt( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_8 ), "#lblMyCheckBoxA8", "#lblBezAntwort8", "#lblAntwort8" );
+
+      /*
+       * Der Button "OK" bekommt den Text "naechste Frage", da beim naechsten 
+       * Betaetigen dieses Schalters zur naechsten Frage verzweigt wird.
+       */
+      this.anwUiButtonText( "#btnOK", "naechste Frage" );
+
+      /*
+       * Die Buttons "Loesen" und "50 % Joker" werden disabled.
+       * 
+       * Die Funktionen stehen nach dem Loesen der Frage nicht 
+       * mehr zur Verfuegung. 
+       *
+       * Diese Buttons werden bei der verzweigung zu naechsten 
+       * Frage wieder freigeschaltet.
+       */
+      $( "#btnLoesen" ).prop( "disabled", true );
+
+      $( "#btn5050Joker" ).prop( "disabled", true );
+
+      /*
+       * Der Button "OK" hat in diesem Moment eine neue Funktion bekommen.
+       * 
+       * Der Modus ist "Abfragen" und die Frage wurde geloest. 
+       *
+       * Beim naechsten Betaeigen des Buttons "OK" soll zur naechsten 
+       * Frage verzweigt werden. Dafuer ist die Kennzeichenvariable 
+       * "m_knz_btn_ok_ist_naechste_frage" zustaendig.
+       * 
+       * Diese Variable wird hier auf TRUE gestellt.
+       */
+      this.m_knz_btn_ok_ist_naechste_frage = true;
+
+      /*
+       * Die Frage wurde geloest. Es muss verhindert werden, dass 
+       * bei einem Mouse-Move-Ereignis die Antwortfelder farbig
+       * hervorgehoben werden. Dafuer ist die Kennzeichenvariable 
+       * "m_ui_knz_farbmarkierung_antworten" zustaendig.
+       * 
+       * Diese Variable wird auf FALSE gestellt.
+       */
+      this.m_ui_knz_farbmarkierung_antworten = false;
+    }
+  }
+
+
+  appFF.prototype.anwUi5050Joker = function()
+  {
+    /*
+     * Pruefung: aktuelle Frage gleich "undefined" ?
+     * 
+     * Ist keine aktuelle Frage vorhanden, wird diese Funktion 
+     * gleich wieder verlassen.
+     */
+    if ( this.m_aktuelle_frage == undefined )
+    {
+      return;
+    }
+
+    this.ui_knz_50_50_joker_moeglich = true;
+  
+    /*
+     * Pruefung: 50-Prozent Joker noch moeglich ?
+     * 
+     * Die Ausblendung erfolgt nur, wenn die Varibale "m_ui_knz_50_50_joker_moeglich" auf TRUE steht.
+     * 
+     * (In dieser Version wird diese Variable immer auf TRUE gestellt)
+     */
+    if ( this.m_ui_knz_50_50_joker_moeglich )
+    {
+      /* 
+       * Ausblendreihenfolge
+       * 
+       * Es werden nur die falschen Antworten betrachtet.
+       * 
+       * Die korrekten Antworten sollen fuer eine Auswahl freigeschaltet bleiben.
+       * Daher werden korrekte Antworten nicht beruecksichtigt.
+       * 
+       * Es gibt einen Ausblendstring: 
+       * 
+       * Der Ausblendstring hat soviele Zeichen, wie es falsche Antworten gibt.
+       * 
+       * Der Ausblendstring bestimt die Ausblendreihenfolge
+       * 
+       * Der Ausblendstring wird per Zufall umgestellt.
+       * 
+       * Fuer jede falsche Antwort gibt es ein Zeichen ("1" oder "0").
+       *
+       * Eine "1" zeigt an, das die Antwort ausgeblendet werden soll.
+       * Eine "0" zeigt an, das die Antwort fuer die Auswahl freigeschaltet bleibt.
+       * (Es wird nur die "1" abgefragt, die "0" koennte auch ein anderes Zeichen sein)
+       * 
+       * Bei einer ungraden Zahl der falschen Antworten, wird die Anzahl der 
+       * auszublendenden Antworten um 1 erhoeht. 
+       * (Ausnahme bei einer falschen Antwort)
+       * 
+       * Damit werden die 50-Prozent der wegzublendenden Antworten gesteuert.
+       *
+       * Bei einer ungraden Zahl der falschen Antworten werden mehr Antworten 
+       * als 50 Prozent ausgeblendet.
+       * 
+       * In dieser Version werden nur Ausblendungen gemacht, wenn die Anzahl
+       * der falschen Antworten zwischen 2 und 7 liegt.
+       * 
+       *    1 falsche Antwort   = 0        = 0 Antworten raus
+       *    2 falsche Antworten = 10       = 1 Antwort raus
+       *    3 falsche Antworten = 110      = 2 Antworten raus
+       *    4 falsche Antworten = 1100     = 2 Antworten raus
+       *    5 falsche Antworten = 11100    = 3 Antworten raus
+       *    6 falsche Antworten = 111000   = 3 Antworten raus
+       *    7 falsche Antworten = 1111000  = 4 Antworten raus
+       * 
+       * Der Ausblendstring ist initial "undefined". 
+       * 
+       * Der Ausblendstring wird nur gesetzt, wenn es Antworten zum ausblenden gibt.
+       * 
+       * Ist der Ausblendstring nach der Ermittlung immer noch "undefined", wird 
+       * keine Ausblendung von Antworten gemacht.
+       */
+
+      /*  
+       * Von der aktuellen Frage, wird die Anzahl der falschen Antworten ermittelt.
+       *
+       * Es werden nur falsche Antworten beruecksichtigt, welche auch AKTIV sind.
+       */
+      var anzahl_falsche_antworten = this.m_aktuelle_frage.getUiAnzahlFalscheAntworten(); 
+
+      /*  
+       * Mit der Anzahl der falschen Antworten, wird der Ausblendstring ermittelt.
+       */
+      var ausblend_str = undefined;
+      
+           if ( anzahl_falsche_antworten == 2 ) { ausblend_str = "10";      }
+      else if ( anzahl_falsche_antworten == 3 ) { ausblend_str = "110";     }
+      else if ( anzahl_falsche_antworten == 4 ) { ausblend_str = "1100";    }
+      else if ( anzahl_falsche_antworten == 5 ) { ausblend_str = "11100";   }
+      else if ( anzahl_falsche_antworten == 6 ) { ausblend_str = "111000";  }
+      else if ( anzahl_falsche_antworten == 7 ) { ausblend_str = "1111000"; }
+      
+      /*  
+       * Pruefung: Ausblendstring gleich "undefined" ?
+       * 
+       * Ist der Ausblendstring nach der Ermittlung immer noch "undefined", wird 
+       * keine Ausblendung von UI-Elementen gemacht.
+       * 
+       * Ist der Ausblendstring gesetzt, wird in dieser Funktion weitergemacht.
+       */
+      if ( ausblend_str == undefined ) 
+      {
+        this.anwUiSetStatusText( "Anzahl falsche Antworten = " + anzahl_falsche_antworten + " = Ausblend Str. " + ausblend_str + " = es gibt nichts zum ausblenden" );
+      }
+      else
+      {
+        /* 
+         * Der Ausblendstring wird per Zufall umgestellt.
+         */
+        ausblend_str = fkString.getRandomUmgestellt( 20, ausblend_str );
+
+        this.anwUiSetStatusText( "Anzahl falsche Antworten = " + anzahl_falsche_antworten + " = Ausblend Str. " + ausblend_str );
+    
+        /* 
+         * Ueber 8 boolsche Variablen wird die Ausblendung der Antworten gesteuert.
+         * Die Variablen werden mit "FALSE" (=Antwort bleibt auswaehlbar) initialisiert.
+         */
+        var knz_antwort_1_raus = false;
+        var knz_antwort_2_raus = false;
+        var knz_antwort_3_raus = false;
+        var knz_antwort_4_raus = false;
+        var knz_antwort_5_raus = false;
+        var knz_antwort_6_raus = false;
+        var knz_antwort_7_raus = false; 
+        var knz_antwort_8_raus = false;
+  
+        /* 
+         * Die Variable "index_ausblend_string" gibt die derzeitige Position im
+         * Ausblendmuster an und bekommt eine 0 als Startwert.
+         */
+        var index_ausblend_string = 0;
+  
+        /* 
+         * Definition einer Hilfsfunktion fuer das Abfragen, ob ein UI-Element sichtbar ist.
+         */
+        var isVisible = function( pElementID ) { return ! $( pElementID ).is( ':hidden' ); }
+  
+        /* 
+         * Auszublendende Antworten ermitteln
+         *
+         * Es werden nur die Antworten bei sichtbaren UI-Checkboxen beruecksichtigt.
+         *
+         * Die If-Abfrage sorgt dafuer, dass nur die falschen Antworten beruecksichtigt werden. 
+         * Korrekte Antworten bleiben fuer die Auswahl erhalten.
+         *
+         * Handelt es sich um eine falsche Antwort, wird im Ausblendstrings nachgesehen, ob die 
+         * Antwort ausgeblendet werden soll. Das ist der Fall, wenn an der akutellen Position 
+         * des Ausblendstrings eine 1 steht. 
+         *
+         * Der Index fuer den Ausblendstring wird bei jeder sichtbaren falschen Antwort um
+         * eine Position weitergestellt.
+         */
+        if ( isVisible( "#lblMyCheckBoxA1" ) )
+        {
+          if ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_1 ) === false )
+          {
+            knz_antwort_1_raus = ausblend_str.charAt( index_ausblend_string ) === '1';
+    
+            index_ausblend_string++;
+          }
+        }
+    
+        if ( isVisible( "#lblMyCheckBoxA2" ) )
+        {
+          if ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_2 ) === false )
+          {
+            knz_antwort_2_raus = ausblend_str.charAt( index_ausblend_string ) === '1';
+    
+            index_ausblend_string++;
+          }
+        }
+    
+        if ( isVisible( "#lblMyCheckBoxA3" ) )
+        {
+          if ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_3 ) === false )
+          {
+            knz_antwort_3_raus = ausblend_str.charAt( index_ausblend_string ) === '1';
+    
+            index_ausblend_string++;
+          }
+        }
+    
+        if ( isVisible( "#lblMyCheckBoxA4" ) )
+        {
+          if ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_4 ) === false )
+          {
+            knz_antwort_4_raus = ausblend_str.charAt( index_ausblend_string ) === '1';
+    
+            index_ausblend_string++;
+          }
+        }
+    
+        if ( isVisible( "#lblMyCheckBoxA5" ) )
+        {
+          if ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_5 ) === false )
+          {
+            knz_antwort_5_raus = ausblend_str.charAt( index_ausblend_string ) === '1';
+    
+            index_ausblend_string++;
+          }
+        }
+    
+        if ( isVisible( "#lblMyCheckBoxA6" ) )
+        {
+          if ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_6 ) === false )
+          {
+            knz_antwort_6_raus = ausblend_str.charAt( index_ausblend_string ) === '1';
+    
+            index_ausblend_string++;
+          }
+        }
+    
+        if ( isVisible( "#lblMyCheckBoxA7" ) )
+        {
+          if ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_7 ) === false )
+          {
+            knz_antwort_7_raus = ausblend_str.charAt( index_ausblend_string ) === '1';
+    
+            index_ausblend_string++;
+          }
+        }
+    
+        if ( isVisible( "#lblMyCheckBoxA8" ) )
+        {
+          if ( this.m_aktuelle_frage.getUiPositionAntwortKorrekt( this.INDEX_ANTWORT_8 ) === false )
+          {
+            knz_antwort_8_raus = ausblend_str.charAt( index_ausblend_string ) === '1';
+    
+            index_ausblend_string++;
+          }
+        }
+    
+        /* 
+         * Zum Abschluss werden die Antworten entweder aus- oder eingeblendet.
+         */
+        this.anwUiXAntwortEnabled( knz_antwort_1_raus, "#lblMyCheckBoxA1", "#lblBezAntwort1", "#lblAntwort1" );
+        this.anwUiXAntwortEnabled( knz_antwort_2_raus, "#lblMyCheckBoxA2", "#lblBezAntwort2", "#lblAntwort2" );
+        this.anwUiXAntwortEnabled( knz_antwort_3_raus, "#lblMyCheckBoxA3", "#lblBezAntwort3", "#lblAntwort3" );
+        this.anwUiXAntwortEnabled( knz_antwort_4_raus, "#lblMyCheckBoxA4", "#lblBezAntwort4", "#lblAntwort4" );
+        this.anwUiXAntwortEnabled( knz_antwort_5_raus, "#lblMyCheckBoxA5", "#lblBezAntwort5", "#lblAntwort5" );
+        this.anwUiXAntwortEnabled( knz_antwort_6_raus, "#lblMyCheckBoxA6", "#lblBezAntwort6", "#lblAntwort6" );
+        this.anwUiXAntwortEnabled( knz_antwort_7_raus, "#lblMyCheckBoxA7", "#lblBezAntwort7", "#lblAntwort7" );
+        this.anwUiXAntwortEnabled( knz_antwort_8_raus, "#lblMyCheckBoxA8", "#lblBezAntwort8", "#lblAntwort8" );
+
+        /* 
+         * Es wird das Kennzeichen "ui_knz_50_50_joker_durchgefuehrt" auf TRUE gesetzt, 
+         * da die 50-Prozent Joker Funktion ausgefuehrt worden ist.
+         */
+        this.ui_knz_50_50_joker_durchgefuehrt = true;
+      }
+    }
+  }
+
+
+  appFF.prototype.anwUiAntwortUmstellung = function()
+  {
+    /* 
+     * Aufruf der Funktion fuer die Umstallung der Antworten
+     */
+    this.m_aktuelle_frage.startAntwortReihenfolgeUmstellen();
+
+    /* 
+     * Nach der Umstellung wird die Frage mit der neuen Reihenfolge 
+     * der Antworten ausgegeben.
+     */
+    this.anwFrageAnzeigen();
+
+    /* 
+     * Wurde die Frage vom Anwender per Button geloest, wird die 
+     * Frage in der neuen Antwortreihenfolge wieder geloest angezeigt.
+     * 
+     * Damit das erneute "Loesen" der Frage funktioniert, muss die 
+     * Kennzeichenvariable "m_ui_knz_loesen_moeglich" auf TRUE 
+     * gestellt werden.
+     */
+    if ( this.m_ui_knz_loesen_moeglich == false )
+    {
+       this.m_ui_knz_loesen_moeglich = true;
+
+       this.anwUiKorrekteAntwortAnzeigen();
+    }
+
+    this.anwUiSetStatusText( "Reihenfolge " + this.m_aktuelle_frage.getStrVertauschReihenfolge() );
+  }
+
+
+  appFF.prototype.anwStartAbfragemodusReihenfolge = function()
+  {
+    /* 
+     * Start einer Fragensitzung mit allen Fragen des Fragenkataloges nach der Reihenfolge.
+     */
+    this.anwStartAbfrageModus( false, -1, -1, -1 );
+  }
+
+
+  appFF.prototype.anwStartAbfragemodusZufall40 = function()
+  {
+    /* 
+     * Start einer Fragensitzung mit 40 zufaelligen Fragen aus dem gesamten Fragenkatalog.
+     */
+    this.anwStartAbfrageModus( true, 40, -1, -1 );
+  }
+
+
+  appFF.prototype.anwStartAbfragemodusZufall80 = function()
+  {
+    /* 
+     * Start einer Fragensitzung mit 80 zufaelligen Fragen aus dem gesamten Fragenkatalog.
+     */
+    this.anwStartAbfrageModus( true, 80, -1, -1 );
+  }
+
+
+  appFF.prototype.anwStartAbfrageModus = function( pKnzModusZufaellig, pAnzahlFragen, pUntergrenze, pObergrenze )
+  {
+    /* 
+     * Aufruf der Funktion fuer die Erstellung einer Abfragesitzung.
+     * 
+     * Der Funktion werden die Parameter fuer die Fragesitzung uebergeben.
+     * 
+     * Konnte die Fragensitzung erstellt werden, liefert die Funktion TRUE zurueck.
+     * Es werden die Felder fuer die Abfragesitzung auf 0 gestellt und 
+     * die erste Frage aus der Fragensitzung wird angezeigt.
+     */
+    if ( this.getAnwFragenFrager().startAbfrageSitzung( pKnzModusZufaellig, pAnzahlFragen, pUntergrenze, pObergrenze ) )
+    {
+      this.m_anzahl_angezeigt                = 0;
+      this.m_anzahl_fragen_beantwortet       = 0;
+      this.m_anzahl_fragen_nicht_beantwortet = 0;
+      this.m_anzahl_falsch_beantwortet       = 0;
+      this.m_anzahl_korrekt_beantwortet      = 0;
+      this.m_anzahl_prozent_korrekt          = 0.0;
+      this.m_anzahl_prozent_falsch           = 0.0;
+
+      this.anwUiSetAnzahlAngezeigt( this.m_anzahl_angezeigt );
+      this.anwUiSetAnzahlFragenBeantwortet( this.m_anzahl_fragen_beantwortet );
+      this.anwUiSetAnzahlFragenNichtBeantwortet( this.m_anzahl_fragen_nicht_beantwortet );
+      this.anwUiSetAnzahlFalschBeantwortet( this.m_anzahl_falsch_beantwortet );
+      this.anwUiSetAnzahlKorrektBeantwortet( this.m_anzahl_korrekt_beantwortet );
+      this.anwUiSetAnzahlProzentKorrekt( this.m_anzahl_prozent_korrekt );
+      this.anwUiSetAnzahlProzentFalsch( this.m_anzahl_prozent_falsch );
+
+      this.anwUiSetAnzahlGesamteFragen( this.getAnwFragenFrager().getAnzahlLabel() );
+
+      this.anwNaechsteFrage( this.ANZEIGE_ERSTE_FRAGE );
+    }
+  }
+
+
+  appFF.prototype.anwStoppAbfrageModus = function()
+  {
+    /* 
+     * Stopp der aktuellen Fragesitzung und Rueckkehr in den Fragenanzeigemodus.
+     *
+     * Es wird die erste Frage des Fragenkataloges angezeigt.
+     */
+    if ( this.getAnwFragenFrager().startAnzeigeFragenKatalog() )
+    {
+      this.m_anzahl_angezeigt                = 0;
+      this.m_anzahl_fragen_beantwortet       = 0;
+      this.m_anzahl_fragen_nicht_beantwortet = 0;
+      this.m_anzahl_falsch_beantwortet       = 0;
+      this.m_anzahl_korrekt_beantwortet      = 0;
+      this.m_anzahl_prozent_korrekt          = 0.0;
+      this.m_anzahl_prozent_falsch           = 0.0;
+
+      this.anwUiSetAnzahlAngezeigt( this.m_anzahl_angezeigt );
+      this.anwUiSetAnzahlFragenBeantwortet( this.m_anzahl_fragen_beantwortet );
+      this.anwUiSetAnzahlFragenNichtBeantwortet( this.m_anzahl_fragen_nicht_beantwortet );
+      this.anwUiSetAnzahlFalschBeantwortet( this.m_anzahl_falsch_beantwortet );
+      this.anwUiSetAnzahlKorrektBeantwortet( this.m_anzahl_korrekt_beantwortet );
+      this.anwUiSetAnzahlProzentKorrekt( this.m_anzahl_prozent_korrekt );
+      this.anwUiSetAnzahlProzentFalsch( this.m_anzahl_prozent_falsch );
+
+      this.anwUiSetAnzahlGesamteFragen( this.getAnwFragenFrager().getAnzahlLabel() );
+
+      this.anwNeueFrageAnzeigen( this.ANZEIGE_ERSTE_FRAGE );
+    }
+  }
+
+
+  appFF.prototype.anwAntwortMouseDown = function( pMouseEventArgs, pAntwort )
+  {
+    /*
+     * PreventDefault
+     * Bei dem uebergebenen Mouse-Event wird "preventDefault" aufgerufen.
+     */
+    pMouseEventArgs.preventDefault();
+
+    /*
+     * Pruefung: Rechtsclick gleich weiter ?
+     * 
+     * Es wird zurerst das Kennzeichen geprueft, ob diese Funktion eingeschaltet ist.
+     * 
+     * Ist die Funktion eingeschaltet, wird am Mouse-Event nachgesehen, ob die rechte
+     * Maustaste gedrueckt worden ist. Ist das so, wird die naechste Frage angezeigt.
+     * 
+     */
+    if ( this.m_knz_rechts_click_ist_weiter )
+    {
+      if ( pMouseEventArgs.which === 3 )
+      {
+        this.anwNaechsteFrage( this.ANZEIGE_NAECHSTE_FRAGE );
+
+        return;
+      }
+    }
+
+    /*
+     * Pruefung: Click bedeutet "weiter" ?
+     * 
+     * Wurde die Frage vom Anwender per "Loesen"-Button aufgeloest, wurde 
+     * die Variable "m_knz_btn_ok_ist_naechste_frage" auf true gestellt.
+     * 
+     * In diesem Zustand soll ein Click auf eine Antwort nicht die 
+     * Antwort markieren, sondern es soll aus der reinen Anzeige der 
+     * Frage weiter zur naechsten Frage verzweigt werden.
+     */
+    if ( this.m_knz_btn_ok_ist_naechste_frage )
+    {
+      this.anwNaechsteFrage( this.ANZEIGE_NAECHSTE_FRAGE );
+
+      return;
+    }
+
+    /*
+     * Pruefung: Soll ein Click die Antwort auswaehlen ?
+     * 
+     * Steht die Variable "m_knz_antwort_set_checkbox_enabled" auf TRUE, wird
+     * bei einem Click auf die Antwort selbige ausgewaehlt.
+     */
+    if ( this.m_knz_antwort_set_checkbox_enabled )
+    {
+      this.anwCheckAntwortX( pAntwort );
+    }
+  }
+
+
+  appFF.prototype.anwCheckAntwortX = function( pIndex )
+  {
+    /*
+     * Ist keine aktuelle Frage vorhanden, wird von dieser Funktion keine
+     * Aktion gemacht. Die Funktion wird verlassen.
+     */
+    if ( this.m_aktuelle_frage == undefined ) 
+    {
+      return;
+    }
+
+    /*
+     * Check-Boxen 
+     * Es wird anhand des Wertes aus dem Parameter "pIndex" diejenige Antwort
+     * gesucht, bei welcher der Check-Box-Wert geaendert werden soll.
+     * 
+     * Bei der Antwort wird der Check-Box-Wert per Toggle umgeschaltet.
+     */
+    if ( pIndex == this.INDEX_ANTWORT_1 ) { this.anwUiSetAntwort1Checked( ! this.anwUiIsAntwort1Checked() ); }
+    if ( pIndex == this.INDEX_ANTWORT_2 ) { this.anwUiSetAntwort2Checked( ! this.anwUiIsAntwort2Checked() ); }
+    if ( pIndex == this.INDEX_ANTWORT_3 ) { this.anwUiSetAntwort3Checked( ! this.anwUiIsAntwort3Checked() ); }
+    if ( pIndex == this.INDEX_ANTWORT_4 ) { this.anwUiSetAntwort4Checked( ! this.anwUiIsAntwort4Checked() ); }
+    if ( pIndex == this.INDEX_ANTWORT_5 ) { this.anwUiSetAntwort5Checked( ! this.anwUiIsAntwort5Checked() ); }
+    if ( pIndex == this.INDEX_ANTWORT_6 ) { this.anwUiSetAntwort6Checked( ! this.anwUiIsAntwort6Checked() ); }
+    if ( pIndex == this.INDEX_ANTWORT_7 ) { this.anwUiSetAntwort7Checked( ! this.anwUiIsAntwort7Checked() ); }
+    if ( pIndex == this.INDEX_ANTWORT_8 ) { this.anwUiSetAntwort8Checked( ! this.anwUiIsAntwort8Checked() ); }
+
+    if ( this.m_aktuelle_frage.getUiAnzahlKorrekteAntworten() === 1 )
+    {
+      /*
+       * Hat die Frage nur eine korrekte Antwort, werden bei allen anderen  
+       * Antworten die Check-Boxen auf "nicht ausgewaehlt" gesetzt.
+       */
+      if ( pIndex != this.INDEX_ANTWORT_1 ) { this.anwUiSetAntwort1Checked( false ); }
+      if ( pIndex != this.INDEX_ANTWORT_2 ) { this.anwUiSetAntwort2Checked( false ); }
+      if ( pIndex != this.INDEX_ANTWORT_3 ) { this.anwUiSetAntwort3Checked( false ); }
+      if ( pIndex != this.INDEX_ANTWORT_4 ) { this.anwUiSetAntwort4Checked( false ); }
+      if ( pIndex != this.INDEX_ANTWORT_5 ) { this.anwUiSetAntwort5Checked( false ); }
+      if ( pIndex != this.INDEX_ANTWORT_6 ) { this.anwUiSetAntwort6Checked( false ); }
+      if ( pIndex != this.INDEX_ANTWORT_7 ) { this.anwUiSetAntwort7Checked( false ); }
+      if ( pIndex != this.INDEX_ANTWORT_8 ) { this.anwUiSetAntwort8Checked( false ); }
+    }
+  }
+
+
+  appFF.prototype.anwSetStandardWerte = function()
+  {
+    /*
+     * Alle Kennzeichenfelder werden auf die Initial-Werte gestellt
+     */
+    this.m_knz_antwort_bezeichnung_anzeigen  = true;
+    this.m_knz_antwort_set_checkbox_enabled  = true;
+    this.m_knz_antwort_reihenfolge_umstellen = false;
+    this.m_knz_btn_ok_ist_naechste_frage     = true;
+    this.m_knz_fragen_nummer_anzeigen        = true;
+    this.m_knz_fragen_text_anzeigen          = true;
+    this.m_knz_antwort_text_korrekt_anzeigen = true;
+    this.m_knz_antwort_text_falsch_anzeigen  = true;
+    this.m_knz_korrekte_antwort_anzeigen     = true;
+    this.m_knz_rechts_click_ist_weiter       = true;
+
+    /*
+     * Die aktuelle Frage wird mit den neuen 
+     * Kennzeichenfeldwerten neu ausgegeben.
+     */
+    this.anwFrageAnzeigen();
+
+    /*
+     * Die Optionscheckboxen werden auf TRUE gestellt.
+     */
+    this.anwUiSetKnzExportFragentextChecked( true );
+    this.anwUiSetKnzExportAntwortKorrektChecked( true );
+    this.anwUiSetKnzExportAntwortFalschChecked( true );
+    this.anwUiSetKnzMarkiereAntwortKorrekhChecked( true );
+    this.anwUiSetKnzErstelleLoesungsbogenChecked( true );
+    this.anwUiSetKnzAntwortenUmstellenChecked( false );
+  }
+
+
+  appFF.prototype.anwSetAntwortReduzierungFrage = function( pAnzahlFalscheAntwortenJeKorrekterAntwort )
+  {
+    this.m_aktuelle_frage.startAntwortReduktion( pAnzahlFalscheAntwortenJeKorrekterAntwort );
+
+    this.anwFrageAnzeigen();
+
+    this.anwUiSetStatusText( this.m_aktuelle_frage.getUiAktivString() );
+  }
+
+
+  appFF.prototype.anwSetAntwortReduzierungFKatalog = function( pAnzahlFalscheAntwortenJeKorrekterAntwort )
+  {
+    if ( this.m_anw_fragen_frager != undefined )
+    {
+      this.m_anw_fragen_frager.startAntwortReduktion( pAnzahlFalscheAntwortenJeKorrekterAntwort );
+      
+      if ( this.m_aktuelle_frage != undefined ) 
+      {
+        this.anwFrageAnzeigen();
+
+        this.anwUiSetStatusText( this.m_aktuelle_frage.getUiAktivString() );
+      }
+    }
+  }
+
+
+  appFF.prototype.startFragenUmstellung = function()
+  {
+    if ( this.m_anw_fragen_frager != undefined )
+    {
+      this.m_anw_fragen_frager.startFragenUmstellung();
+      
+      this.anwFrageAnzeigen();
+    }
+  }
+
+
+  appFF.prototype.anwSetKnzFragenTextAnzeigen = function()
+  {
+    this.m_knz_fragen_text_anzeigen = ! this.m_knz_fragen_text_anzeigen;
+
+    this.anwFrageAnzeigen();
+  }
+
+
+  appFF.prototype.anwSetKnzAntwortKorrektAnzeigen = function()
+  {
+    this.m_knz_antwort_text_korrekt_anzeigen = ! this.m_knz_antwort_text_korrekt_anzeigen;
+
+    this.anwFrageAnzeigen();
+  }
+
+
+  appFF.prototype.anwSetKnzAntwortFalschAnzeigen = function()
+  {
+    this.m_knz_antwort_text_falsch_anzeigen = ! this.m_knz_antwort_text_falsch_anzeigen;
+
+    this.anwFrageAnzeigen();
+  }
+
+
+  appFF.prototype.anwUiFrageStart = function()
+  {
+    this.anwNaechsteFrage( this.ANZEIGE_ERSTE_FRAGE );
+  }
+
+
+  appFF.prototype.anwUiFrageZurueck = function()
+  {
+    this.anwNaechsteFrage( this.ANZEIGE_VORHERIGE_FRAGE );
+  }
+
+
+  appFF.prototype.anwUiFrageWeiter = function()
+  {
+    this.anwNaechsteFrage( this.ANZEIGE_NAECHSTE_FRAGE );
+  }
+
+
+  appFF.prototype.anwUiFrageEnde = function()
+  {
+    this.anwNaechsteFrage( this.ANZEIGE_LETZTE_FRAGE );
+  }
+
+
+  appFF.prototype.anwUiFrageButtonOK = function()
+  {
+    this.anwNaechsteFrage( this.ANZEIGE_NAECHSTE_FRAGE );
+  }
+           
+
+  appFF.prototype.anwErstelleTestFk = function()
+  {
+    if ( this.getAnwFragenFrager().erstelleTestFragenKatalog() )
+    {
+      this.anwNeueFrageAnzeigen( this.ANZEIGE_ERSTE_FRAGE );
+    }
+  }
+
+
+  appFF.prototype.anwUiSetAnzahlAngezeigt = function( pString )
+  {
+    $( '#anzahl_angezeigt' ).text( pString );
+  }
+
+
+  appFF.prototype.anwUiSetAnzahlFragenBeantwortet = function( pString )
+  {
+    $( '#anzahl_fragen_beantwortet' ).text( pString );
+  }
+
+
+  appFF.prototype.anwUiSetAnzahlFragenNichtBeantwortet = function( pString )
+  {
+    $( '#anzahl_fragen_nicht_beantwortet' ).text( pString );
+  }
+
+
+  appFF.prototype.anwUiSetAnzahlFalschBeantwortet = function( pString )
+  {
+    $( '#anzahl_falsch_beantwortet' ).text( pString );
+  }
+
+
+  appFF.prototype.anwUiSetAnzahlKorrektBeantwortet = function( pString )
+  {
+    $( '#anzahl_korrekt_beantwortet' ).text( pString );
+  }
+
+
+  appFF.prototype.anwUiSetAnzahlProzentKorrekt = function( pString )
+  {
+    $( '#anzahl_prozent_korrekt' ).text( this.round3NK( pString ) + " %" );
+  }
+
+
+  appFF.prototype.anwUiSetAnzahlProzentFalsch = function( pString )
+  {
+    $( '#anzahl_prozent_falsch' ).text( this.round3NK( pString ) + " %" );
+  }
+
+
+  appFF.prototype.round3NK = function( pZahl ) 
+  {
+    if ( pZahl == undefined ) { return 0.000; }
+
+    if ( isNaN( pZahl )     ) { return 0.000; }
+
+    return Math.round( ( pZahl == undefined ? Number(0) : pZahl ) * 1000.0) / 1000.0;
+  }
+
+
+  appFF.prototype.anwUiButtonText = function( pButtonID, pString )
+  {
+    try 
+    {
+      $( pButtonID ).text( ( pString == undefined ? "" : pString )  );
+    }
+    catch ( err_inst )
+    {}
+  }
+
+
+  appFF.prototype.anwUiSetText = function( pID, pString )
+  {
+    try 
+    {
+      $( pID ).text( ( pString == undefined ? "" : pString )  );
+    }
+    catch ( err_inst )
+    {}
+  }
+
+
+  appFF.prototype.anwUiSetStatusText = function( pString )
+  {
+    try 
+    {
+      $( '#lblStatusAnzeige1' ).text( pString );
+    }
+    catch ( err_inst )
+    {}
+  }
+
+
+  appFF.prototype.anwUiSetAnzahlGesamteFragen = function( pString )
+  {
+    try 
+    {
+      $( '#anzahl_fragen_gesamt' ).text( pString );
+    }
+    catch ( err_inst )
+    {}
+  }
+
+
+  appFF.prototype.anwLadeX = function( pXmlDateiInhalt )
+  {
+    this.getAnwFragenFrager().ladeXmlFragenKatalogJavaScript( pXmlDateiInhalt, true );
+
+    this.anwNeueFrageAnzeigen( this.ANZEIGE_ERSTE_FRAGE );
+  }
+
+
+  appFF.prototype.anwFragenkatalogHinzufuegen = function( pXmlDateiInhalt )
+  {
+    this.getAnwFragenFrager().ladeXmlFragenKatalogJavaScript( pXmlDateiInhalt, false );
+
+    this.anwNeueFrageAnzeigen( this.ANZEIGE_ERSTE_FRAGE );
+  }
+
+
+  appFF.prototype.anwExportFrageBogenFragenKatalog = function()
+  {
+    /*
+     * Aufruf der Exportfunktion fuer den gesamten Fragenkatalog.
+     * 
+     * Nach dem Export wird in der Statuszeile ein Text angezeigt, ob 
+     * der Export geklappt hat oder nicht.
+     */
+    if ( this.getAnwFragenFrager().exportFrageBogenFragenKatalog( this.anwUiIsKnzExportAntwortKorrektChecked(), this.anwUiIsKnzExportAntwortFalschChecked(), true, this.anwUiIsKnzExportFragentextChecked(), this.anwUiIsKnzMarkiereAntwortKorrekhChecked(), this.anwUiIsKnzErstelleLoesungsbogenChecked(), this.anwUiIsKnzExportAntwortenUmstellenChecked() ) )
+    {
+      this.anwUiSetStatusText( "Export Fragenkatalog OK" );
+    }
+    else
+    { 
+      this.anwUiSetStatusText( "Kein Fragenkatalog fuer den Export vorhanden" );
+    }
+  }
+
+
+  appFF.prototype.anwExportFrageBogenLernFabrik = function()
+  {
+    /*
+     * Aufruf der Exportfunktion fuer die aktuelle Fragensitzung.
+     * 
+     * Nach dem Export wird in der Statuszeile ein Text angezeigt, ob 
+     * der Export geklappt hat oder nicht.
+     */
+    if ( this.getAnwFragenFrager().exportFrageBogenLernFabrik( undefined, this.anwUiIsKnzExportAntwortKorrektChecked(), this.anwUiIsKnzExportAntwortFalschChecked(), true, this.anwUiIsKnzExportFragentextChecked(), this.anwUiIsKnzMarkiereAntwortKorrekhChecked(), this.anwUiIsKnzErstelleLoesungsbogenChecked(), this.anwUiIsKnzExportAntwortenUmstellenChecked() ) )
+    {
+      this.anwUiSetStatusText( "Export Fragensitzung OK" );
+    }
+    else
+    { 
+      this.anwUiSetStatusText( "Keine Fragensitzung fuer den Export vorhanden" );
+    }
+  }
+
+
+  appFF.prototype.anwUiSetAntwort1Checked = function( pChecked ) { $( '#lblMyCheckBoxA1' ).toggleClass( "cssPropChecked", pChecked ); }
+  appFF.prototype.anwUiSetAntwort2Checked = function( pChecked ) { $( '#lblMyCheckBoxA2' ).toggleClass( "cssPropChecked", pChecked ); }
+  appFF.prototype.anwUiSetAntwort3Checked = function( pChecked ) { $( '#lblMyCheckBoxA3' ).toggleClass( "cssPropChecked", pChecked ); }
+  appFF.prototype.anwUiSetAntwort4Checked = function( pChecked ) { $( '#lblMyCheckBoxA4' ).toggleClass( "cssPropChecked", pChecked ); }
+  appFF.prototype.anwUiSetAntwort5Checked = function( pChecked ) { $( '#lblMyCheckBoxA5' ).toggleClass( "cssPropChecked", pChecked ); }
+  appFF.prototype.anwUiSetAntwort6Checked = function( pChecked ) { $( '#lblMyCheckBoxA6' ).toggleClass( "cssPropChecked", pChecked ); }
+  appFF.prototype.anwUiSetAntwort7Checked = function( pChecked ) { $( '#lblMyCheckBoxA7' ).toggleClass( "cssPropChecked", pChecked ); }
+  appFF.prototype.anwUiSetAntwort8Checked = function( pChecked ) { $( '#lblMyCheckBoxA8' ).toggleClass( "cssPropChecked", pChecked ); }
+
+
+  appFF.prototype.anwUiIsAntwort1Checked  = function() { return $( '#lblMyCheckBoxA1' ).hasClass( 'cssPropChecked' ); }
+  appFF.prototype.anwUiIsAntwort2Checked  = function() { return $( '#lblMyCheckBoxA2' ).hasClass( 'cssPropChecked' ); }
+  appFF.prototype.anwUiIsAntwort3Checked  = function() { return $( '#lblMyCheckBoxA3' ).hasClass( 'cssPropChecked' ); }
+  appFF.prototype.anwUiIsAntwort4Checked  = function() { return $( '#lblMyCheckBoxA4' ).hasClass( 'cssPropChecked' ); }
+  appFF.prototype.anwUiIsAntwort5Checked  = function() { return $( '#lblMyCheckBoxA5' ).hasClass( 'cssPropChecked' ); }
+  appFF.prototype.anwUiIsAntwort6Checked  = function() { return $( '#lblMyCheckBoxA6' ).hasClass( 'cssPropChecked' ); }
+  appFF.prototype.anwUiIsAntwort7Checked  = function() { return $( '#lblMyCheckBoxA7' ).hasClass( 'cssPropChecked' ); }
+  appFF.prototype.anwUiIsAntwort8Checked  = function() { return $( '#lblMyCheckBoxA8' ).hasClass( 'cssPropChecked' ); }
+
+
+  appFF.prototype.anwUiIsKnzExportFragentextChecked         = function() { return $( '#cbKnzExportFragentext'       ).prop( 'checked' ); }
+  appFF.prototype.anwUiIsKnzExportAntwortFalschChecked      = function() { return $( '#cbKnzExportAntwortFalsch'    ).prop( 'checked' ); }
+  appFF.prototype.anwUiIsKnzExportAntwortKorrektChecked     = function() { return $( '#cbKnzExportAntwortKorrekt'   ).prop( 'checked' ); }
+  appFF.prototype.anwUiIsKnzErstelleLoesungsbogenChecked    = function() { return $( '#cbKnzErstelleLoesungsbogen'  ).prop( 'checked' ); }
+  appFF.prototype.anwUiIsKnzMarkiereAntwortKorrekhChecked   = function() { return $( '#cbKnzMarkiereAntwortKorrekt' ).prop( 'checked' ); }
+  appFF.prototype.anwUiIsKnzExportAntwortenUmstellenChecked = function() { return $( '#cbKnzAntwortenUmstellen'     ).prop( 'checked' ); }
+
+
+  appFF.prototype.anwUiSetKnzExportFragentextChecked        = function( pKnzIsChecked ) { $( '#cbKnzExportFragentext'       ).prop( 'checked', pKnzIsChecked ); }
+  appFF.prototype.anwUiSetKnzAntwortenUmstellenChecked      = function( pKnzIsChecked ) { $( '#cbKnzAntwortenUmstellen'     ).prop( 'checked', pKnzIsChecked ); }
+  appFF.prototype.anwUiSetKnzExportAntwortFalschChecked     = function( pKnzIsChecked ) { $( '#cbKnzExportAntwortFalsch'    ).prop( 'checked', pKnzIsChecked ); }
+  appFF.prototype.anwUiSetKnzExportAntwortKorrektChecked    = function( pKnzIsChecked ) { $( '#cbKnzExportAntwortKorrekt'   ).prop( 'checked', pKnzIsChecked ); }
+  appFF.prototype.anwUiSetKnzErstelleLoesungsbogenChecked   = function( pKnzIsChecked ) { $( '#cbKnzErstelleLoesungsbogen'  ).prop( 'checked', pKnzIsChecked ); }
+  appFF.prototype.anwUiSetKnzMarkiereAntwortKorrekhChecked  = function( pKnzIsChecked ) { $( '#cbKnzMarkiereAntwortKorrekt' ).prop( 'checked', pKnzIsChecked ); }
+
+
+  function clsMyFileReader()
+  {
+    /*
+     * Java-Script-Element des InputFile-Html-Elementes
+     * 
+     * Eine Dateiauswahl wird in HTML mit einem Input-Element vom Typ "file" ermoeglicht.
+     * 
+     * <input id="idHtmlDateiInputElement" type="file" >
+     * 
+     * Ein solches Input-Element wird von dieser Klasse verwendet um die Dateiauswahl anzuzeigen.
+     * Das HTML-Element wird dabei selber nicht angezeigt, sondern bleibt im Hintergrund.
+     */
+    m_element_input_file = undefined;
+
+    /*
+     * Java-Script-File Element
+     * Speichert die ausgewaehlte Datei.
+     * Ist "undefined", wenn keine Datei ausgewaehlt ist.
+     */
+    m_inst_js_file = undefined;
+
+    /*
+     * Externe Funktion, welche gerufen wird, wenn eine Datei geladen worden ist.
+     * Dient dazu, den Datei-Inhalt weiterzugeben.
+     */
+    fktExternDateiGeladen = undefined;
+  }
+
+
+  clsMyFileReader.prototype.init = function( pIdInputFile )
+  {
+    /*
+     * Setzen des Input Elementes
+     * 
+     * Der Parameter "pIdInputFile" spezifiziert die ID des Eingabeelementes.
+     * 
+     * Das Eingabeelement wird ueber die Funktion "document.getElementById( .. )" gesetzt.
+     */
+    this.m_element_input_file = document.getElementById( pIdInputFile );
+
+    /*
+     * Setzen einer Variable auf die Klasse selber.
+     * Diese Referenz wird im Eventhandler benutzt.
+     */
+    var inst_my_file_reader = this;
+
+    /*
+     * Event-Handler-Funktion
+     * Es wird ein Event-Hanlder fuer die Change-Funktion des File-Input Elementes erstellt.
+     * 
+     * Es wird der Dateiname aus dem File-Input-Element in der Membervariable "m_inst_js_file" gespeichert. 
+     *
+     * Danach wird die Funktion zum Einleisen der Datei aufgerufen.
+     */
+    var event_handler_change = function( pJsEvent )
+    {
+      inst_my_file_reader.m_inst_js_file = inst_my_file_reader.m_element_input_file.files[ 0 ];
+
+      inst_my_file_reader.dateiEinlesen();
+    }
+
+    /*
+     * Zuweisung des Event-Handlers am Input-File-Element.
+     */
+    this.m_element_input_file.addEventListener( 'change', event_handler_change );
+  }
+
+
+  clsMyFileReader.prototype.dateiEinlesen = function()
+  {
+    /*
+     * Pruefung: Wurde eine Datei ausgewaehlt ?
+     * 
+     * Es wurde eine Datei ausgewaehlt, wenn die Variable "m_inst_js_file" 
+     * ungleich "undefined" ist.
+     * 
+     * Ist die Variable "undefined", wird nichts gemacht.
+     * 
+     * Ist die Variable gesetzt, wird die Datei eingelesen.
+     */
+    if ( this.m_inst_js_file != undefined )
+    {
+      /*
+       * Regulaerer Ausdruck um nur Dateien vom Typ "text.*" zu lesen.
+       */
+      var reg_ausdruck_type_text = /text.*/;
+
+      /*
+       * Pruefung: Handelt es sich um eine Datei mit Text ?
+       */
+      if ( this.m_inst_js_file.type.match( reg_ausdruck_type_text ) )
+      {
+        /*
+         * Es wird eine Instanz von "FileReader" erstellt.
+         */
+        var inst_file_reader = new FileReader();
+
+        /*
+         * Eine Referenz auf diese Instanz erstellen.
+         * Diese Referenz wird in der Event-Funktion benoetigt,
+         * um auf diese Instanz verweisen zu koennen.
+         */
+        var inst_my_file_reader = this;
+
+        /*
+         * Eventhandler "onload"
+         * 
+         * Nachdem der File-Reader die Datei geladen hat, wird die 
+         * Funktion "onload" der File-Reader-Klasse aufgerufen.
+         * 
+         * Die Eventhandler-Funktion "onload" wird hier mit einer 
+         * eigenen Funktion gesetzt.
+         * 
+         * Damit wird der Zugriff auf den Datei-Inhalt moeglich.
+         * 
+         * Von der Funktion wird geprueft, ob eine externe Funktion
+         * vorhanden ist. Wenn diese Funktion vorhanden ist, wird 
+         * die Funktion aufgerufen.
+         */
+        inst_file_reader.onload = function( pJsEvent )
+        {
+          if ( inst_my_file_reader.fktExternDateiGeladen != undefined )
+          {
+            inst_my_file_reader.fktExternDateiGeladen( inst_file_reader.result );
+          }
+        }
+
+        /*
+         * Aufruf der Funktion "readAsText" der FileReader-Klasse.
+         * 
+         * Als Parameter wird die Instanz aus dem Dateiauswahldialog uebergeben.
+         * 
+         * Diese Funktion sorgt dafuer, dass die Datei eingelesen und 
+         * die Event-Funktion "onload" aufgerufen wird.
+         */
+        inst_file_reader.readAsText( this.m_inst_js_file );
+      }
+    }
+  }
+
+
+  clsMyFileReader.prototype.start = function()
+  {
+    /*
+     * Java-Script-File Element auf "undefined" setzen.
+     * Es wurde keine Datei ausgewaehlt.
+     */
+    this.m_inst_js_file = undefined;
+
+    /*
+     * Am File-Input-Element wird die Click-Funktion aufgerufen.
+     * Das startet den Dateiauswahl-Dialog.
+     */
+    this.m_element_input_file.click();
+  }
+
+
+  var appUI = {
+
+    my_file_reader : undefined,
+
+    m_app : new appFF(),
+
+    initAnwendung : function()
+    {
+      $( "#lblMyCheckBoxA1" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 1 ); } );
+      $( "#lblMyCheckBoxA2" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 2 ); } );
+      $( "#lblMyCheckBoxA3" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 3 ); } );
+      $( "#lblMyCheckBoxA4" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 4 ); } );
+      $( "#lblMyCheckBoxA5" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 5 ); } );
+      $( "#lblMyCheckBoxA6" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 6 ); } );
+      $( "#lblMyCheckBoxA7" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 7 ); } );
+      $( "#lblMyCheckBoxA8" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 8 ); } );
+
+      $( "#lblMyCheckBoxA1" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 1 ); } );
+      $( "#lblMyCheckBoxA2" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 2 ); } );
+      $( "#lblMyCheckBoxA3" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 3 ); } );
+      $( "#lblMyCheckBoxA4" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 4 ); } );
+      $( "#lblMyCheckBoxA5" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 5 ); } );
+      $( "#lblMyCheckBoxA6" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 6 ); } );
+      $( "#lblMyCheckBoxA7" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 7 ); } );
+      $( "#lblMyCheckBoxA8" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 8 ); } );
+
+
+      $( "#lblAntwort1" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 1 ); } );
+      $( "#lblAntwort2" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 2 ); } );
+      $( "#lblAntwort3" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 3 ); } );
+      $( "#lblAntwort4" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 4 ); } );
+      $( "#lblAntwort5" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 5 ); } );
+      $( "#lblAntwort6" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 6 ); } );
+      $( "#lblAntwort7" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 7 ); } );
+      $( "#lblAntwort8" ).mouseover( function() { appUI.m_app.anwUiMarkiereAntwortMouseMove( 8 ); } );
+
+      $( "#lblAntwort1" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 1 ); } );
+      $( "#lblAntwort2" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 2 ); } );
+      $( "#lblAntwort3" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 3 ); } );
+      $( "#lblAntwort4" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 4 ); } );
+      $( "#lblAntwort5" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 5 ); } );
+      $( "#lblAntwort6" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 6 ); } );
+      $( "#lblAntwort7" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 7 ); } );
+      $( "#lblAntwort8" ).click( function( pMouseEvent ) { appUI.m_app.anwAntwortMouseDown( pMouseEvent, 8 ); } );
+
+
+      $( "#btnFrageStart"                   ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwUiFrageStart();                     } );
+
+      $( "#btnFrageZurueck"                 ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwUiFrageZurueck();                   } );
+
+      $( "#btnFrageWeiter"                  ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwUiFrageWeiter();                    } );
+
+      $( "#btnFrageEnde"                    ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwUiFrageEnde();                      } );
+
+      $( "#btnOK"                           ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwUiFrageButtonOK();                  } );
+
+      $( "#btnErstelleTestFk"               ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwErstelleTestFk();                   } );
+
+      $( "#btnLoesen"                       ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwUiKorrekteAntwortAnzeigen();        } );
+
+      $( "#btn5050Joker"                    ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwUi5050Joker();                      } );
+
+      $( "#btnTestUmstellung"               ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwUiAntwortUmstellung();              } );
+
+      $( "#btnStartAbfrageReihenfolge"      ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwStartAbfragemodusReihenfolge();     } );
+
+      $( "#btnStartAbfrageZufall40"         ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwStartAbfragemodusZufall40();        } );
+
+      $( "#btnStartAbfrageZufall80"         ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwStartAbfragemodusZufall80();        } );
+
+      $( "#btnStartExportFragebogen"        ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwExportFrageBogenFragenKatalog();    } );
+
+      $( "#btnStartExportLernFabrik"        ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwExportFrageBogenLernFabrik();       } );
+
+      $( "#btnEndAbfrageModus"              ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwStoppAbfrageModus();                } );
+
+      $( "#btnOptKnzFragenTextAnzeigen"     ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwSetKnzFragenTextAnzeigen();         } );
+
+      $( "#btnOptKnzAntwortKorrektAnzeigen" ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwSetKnzAntwortKorrektAnzeigen();     } );
+
+      $( "#btnOptKnzAntwortFalschAnzeigen"  ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwSetKnzAntwortFalschAnzeigen();      } );
+
+      $( "#btnOptStandardWerte"             ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwSetStandardWerte();                 } );
+
+      $( "#btnOptAntwortReduzierung1"       ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwSetAntwortReduzierungFKatalog( 1 ); } );
+
+      $( "#btnOptAntwortReduzierung2"       ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwSetAntwortReduzierungFKatalog( 2 ); } );
+
+      $( "#btnOptAntwortReduzierung3"       ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwSetAntwortReduzierungFKatalog( 3 ); } );
+
+      $( "#btnOptAntwortReduzierungAus"     ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwSetAntwortReduzierungFKatalog( 8 ); } );
+ 
+      $( "#btnFragenUmstellung"             ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.startFragenUmstellung();               } );
+
+      $( "#btnStartShowAnleitung"           ).click( function( pEvent ) { pEvent.preventDefault(); appUI.startPdfLink( "#linkAnlteitung" );           } );
+
+
+      $( "#btnDateiLaden" ).click( function()
+      {
+        /*
+         * Definition einer Funktion, welche nach einem erfolgreichen Dateiladen aufgerufen wird.
+         * 
+         * Diese Funktion sorgt fuer dafuer, dass der gelesene Dateiinhalt in der Anwendungsklasse ankommt.
+         * 
+         * Mit dieser Funktion werden die File-Reader-Klasse und die Anwendungsklasse verbunden.
+         */
+        var myFktDateiEinlesen = function( pDateiInhalt ) { appUI.m_app.anwLadeX( pDateiInhalt ); };
+
+        /*
+         * Die Funktion wird in der File-Reader-Instanz gesetzt
+         */
+        appUI.my_file_reader.fktExternDateiGeladen = myFktDateiEinlesen;
+
+        /*
+         * An der File-Reader-Instanz wird die Funktion "start" aufgerufen.
+         * Das bewirkt die Anzeige des Dateiauswahldialoges.
+         */
+        appUI.my_file_reader.start();
+
+      } );
+
+
+      $( "#btnFragenkatalogHinzufuegen" ).click( function()
+      {
+        /*
+         * Definition einer Funktion, welche nach einem erfolgreichen Dateiladen aufgerufen wird.
+         * 
+         * Diese Funktion sorgt fuer dafuer, dass der gelesene Dateiinhalt in der Anwendungsklasse ankommt.
+         * 
+         * Mit dieser Funktion werden die File-Reader-Klasse und die Anwendungsklasse verbunden.
+         */
+        var myFktDateiEinlesen = function( pDateiInhalt ) { appUI.m_app.anwFragenkatalogHinzufuegen( pDateiInhalt ); };
+
+        /*
+         * Die Funktion wird in der File-Reader-Instanz gesetzt
+         */
+        appUI.my_file_reader.fktExternDateiGeladen = myFktDateiEinlesen;
+
+        /*
+         * An der File-Reader-Instanz wird die Funktion "start" aufgerufen.
+         * Das bewirkt die Anzeige des Dateiauswahldialoges.
+         */
+        appUI.my_file_reader.start();
+
+      } );
+
+
+      /*
+       * Initialisierung der FrangenFrager-Anwendung
+       */
+       appUI.m_app.anwInit();
+
+      /*
+       * Zeige die aktuelle Frage an.
+       * 
+       * Initial ist keine Frage vorhanden, es werden aber 
+       * die Antwort-Controls mit Initialtext bestueckt.
+       */
+       appUI.m_app.anwAktuelleFrageAnzeigen();
+
+      /*
+       * Es wird eine File-Reader-Instanz erstellt.
+       */
+       appUI.my_file_reader = new clsMyFileReader();
+
+      /*
+       * In der File-Reader-Instanz wird die ID des unsichtbaren 
+       * File-Input-Elementes gesetzt.
+       */
+       appUI.my_file_reader.init( 'idHtmlDateiInputElement' );
+      
+      /*
+       * In der Fragenanwendung, wird initial ein Testfragenkatalog erstellt. 
+       * 
+       * Dieser Schritt waere hier nicht notwendig, da normalerweise ein 
+       * Fragenkatalog geladen werden muss. 
+       * 
+       * Damit in Debug-Sitzungen ein Fragenkatalog vorhanden
+       * ist, wird hier ein Test-Fragenkatalog erstellt.
+       * 
+       * Die aufgerufene Funktion sorgt dafuer, dass die erste Frage
+       * des Testfragenkataloges angezeigt wird.
+       */
+       appUI.m_app.anwErstelleTestFk();
+     },
+
+     startPdfLink : function( pIdLink )
+     {
+       var details_link = $( pIdLink )[ 0 ];  
+
+       if ( details_link !== undefined )
+       {
+         details_link.click();
+ 
+         //var neues_fenster = window.open( details_link.href, "Anleitung", "menubar=no,status=no,location=no,toolbar=no" );
+         //neues_fenster.focus();
+      }
+    }
+  }
+
+  $( document ).ready( function()
+  {
+    /*
+     * Optional: Default Event des rechten Mausclicks deaktivieren
+     */
+    //$( document ).contextmenu( function( pEvent ) { pEvent.preventDefault(); return false; } );
+
+    appUI.initAnwendung();
+
+  } ); // document.ready
+
+</script>
+</head>
+<body>
+
+    <br>
+
+    <div id="frameAnwendung" >
+
+        <div id="frameFragen" >
+        
+            <div id="frameFrageTop" >
+                <label id="lblFrageNr" class="cssLabelFrageNr" >Nr</label>&nbsp;<label id="lblFrage1" class="cssLabelFrage" >Fragenlabel 1</label>
+            </div>
+
+            <div id="frameAntwort1" >&nbsp;<label id="lblMyCheckBoxA1" class="cssMyLabelCheckBox" >1</label>&nbsp;&nbsp;&nbsp;<label id="lblBezAntwort1" class="cssLabelAntwort" >1</label>&nbsp;<label for="optAntwort1" id="lblAntwort1" class="cssLabelAntwort" >Label X1</label><br></div>
+            <div id="frameAntwort2" >&nbsp;<label id="lblMyCheckBoxA2" class="cssMyLabelCheckBox" >2</label>&nbsp;&nbsp;&nbsp;<label id="lblBezAntwort2" class="cssLabelAntwort" >2</label>&nbsp;<label for="optAntwort2" id="lblAntwort2" class="cssLabelAntwort" >Label X2</label><br></div>
+            <div id="frameAntwort2" >&nbsp;<label id="lblMyCheckBoxA3" class="cssMyLabelCheckBox" >3</label>&nbsp;&nbsp;&nbsp;<label id="lblBezAntwort3" class="cssLabelAntwort" >3</label>&nbsp;<label for="optAntwort3" id="lblAntwort3" class="cssLabelAntwort" >Label X3</label><br></div>
+            <div id="frameAntwort3" >&nbsp;<label id="lblMyCheckBoxA4" class="cssMyLabelCheckBox" >4</label>&nbsp;&nbsp;&nbsp;<label id="lblBezAntwort4" class="cssLabelAntwort" >4</label>&nbsp;<label for="optAntwort4" id="lblAntwort4" class="cssLabelAntwort" >Label X4</label><br></div>
+            <div id="frameAntwort4" >&nbsp;<label id="lblMyCheckBoxA5" class="cssMyLabelCheckBox" >5</label>&nbsp;&nbsp;&nbsp;<label id="lblBezAntwort5" class="cssLabelAntwort" >5</label>&nbsp;<label for="optAntwort5" id="lblAntwort5" class="cssLabelAntwort" >Label X5</label><br></div>
+            <div id="frameAntwort5" >&nbsp;<label id="lblMyCheckBoxA6" class="cssMyLabelCheckBox" >6</label>&nbsp;&nbsp;&nbsp;<label id="lblBezAntwort6" class="cssLabelAntwort" >6</label>&nbsp;<label for="optAntwort6" id="lblAntwort6" class="cssLabelAntwort" >Label X6</label><br></div>
+            <div id="frameAntwort6" >&nbsp;<label id="lblMyCheckBoxA7" class="cssMyLabelCheckBox" >7</label>&nbsp;&nbsp;&nbsp;<label id="lblBezAntwort7" class="cssLabelAntwort" >7</label>&nbsp;<label for="optAntwort7" id="lblAntwort7" class="cssLabelAntwort" >Label X7</label><br></div>
+            <div id="frameAntwort7" >&nbsp;<label id="lblMyCheckBoxA8" class="cssMyLabelCheckBox" >8</label>&nbsp;&nbsp;&nbsp;<label id="lblBezAntwort8" class="cssLabelAntwort" >8</label>&nbsp;<label for="optAntwort8" id="lblAntwort8" class="cssLabelAntwort" >Label X8</label><br></div>
+            
+            <div id="frameFrageBottom" >
+                <label id="lblFrage2a" class="cssLabelFrageNr" >&nbsp;</label>&nbsp;<label id="lblFrage2" class="cssLabelFrage" >Fragenlabel 2</label><br>
+            </div>
+        
+        </div>
+
+        <div id="frameFragenNavigation1" class="frameButtonDiv" >
+        
+            <div class="cssAnwButton" id="btnFrageStart"   >Start&nbsp;</div>
+            
+            <div class="cssAnwButton" id="btnFrageZurueck" >zur&uuml;ck&nbsp;</div>
+            
+            <div class="cssAnwButton" id="btnFrageWeiter"  >weiter</div>
+            
+            <div class="cssAnwButton" id="btnFrageEnde"    >Ende</div>
+        
+        </div>
+        
+        <div id="frameFragenNavigation2" class="frameButtonDiv" >
+            
+            <div class="cssAnwButton" id="btnOK"             >OK</div>
+            
+            <div class="cssAnwButton" id="btn5050Joker"      >50/50</div>
+            
+            <div class="cssAnwButton" id="btnLoesen"         >L&ouml;sen</div>
+            
+            <div class="cssAnwButton" id="btnTestUmstellung" >Umstellung</div>
+        
+        </div>
+
+        <div id="frameAnzeigeZaehler" >
+     
+            <table>
+
+                <tr>
+                
+                    <td>Anzahl gesamt</td>
+                    <td><div class="cssFeldAnzahl" id="anzahl_fragen_gesamt">0</div></td>
+                    
+                    <td>&nbsp;</td>
+                    
+                    <td>Anzahl beantwortet</td>
+                    <td><div class="cssFeldAnzahl" id="anzahl_fragen_beantwortet">0</div></td>
+                
+                </tr>
+                
+                <tr>
+                
+                    <td>Anzahl angezeigt</td>
+                    <td><div class="cssFeldAnzahl"  id="anzahl_angezeigt">0</div></td>
+                    
+                    <td>&nbsp;</td>
+                    
+                    <td>Anzahl nicht beantwortet</td>
+                    <td><div class="cssFeldAnzahl" id="anzahl_fragen_nicht_beantwortet">0</div></td>
+                
+                </tr>                
+                
+                <tr>
+                
+                    <td>Anzahl korrekt </td>
+                    <td><div class="cssFeldAnzahl" id="anzahl_korrekt_beantwortet">0</div></td>
+                    
+                    <td>&nbsp;</td>
+                    
+                    <td>Prozent korrekt</td>
+                    <td><div class="cssFeldAnzahl" id="anzahl_prozent_korrekt">0&nbsp;%</div></td>
+                
+                </tr>
+                
+                <tr>
+                
+                    <td>Anzahl falsch</td>
+                    <td><div class="cssFeldAnzahl" id="anzahl_falsch_beantwortet">0</div></td>
+                    
+                    <td>&nbsp;</td>
+                    
+                    <td>Prozent falsch</td>
+                    <td><div class="cssFeldAnzahl" id="anzahl_prozent_falsch">0&nbsp;%</div></td></tr>
+                
+                </tr>
+
+            </table>
+        
+        </div>
+
+        <div id="lblStatusAnzeige1" ></div>
+
+        <div id="frameFragenSitzung" class="frameButtonDiv" >
+        
+            <div class="cssAnwButton" id="btnStartAbfrageReihenfolge" >Reihenfolge</div>
+            
+            <div class="cssAnwButton" id="btnStartAbfrageZufall40"    >Zufall 40</div>
+            
+            <div class="cssAnwButton" id="btnStartAbfrageZufall80"    >Zufall 80</div>
+            
+            <div class="cssAnwButton" id="btnEndAbfrageModus"         >Ende Fragesitzung</div>
+        
+        </div>
+        
+        <div id="frameOptionen" class="frameButtonDiv" >
+        
+            <div class="cssAnwButton" id="btnOptKnzFragenTextAnzeigen"     >Fragentext anzeigen</div>
+            
+            <div class="cssAnwButton" id="btnOptKnzAntwortKorrektAnzeigen" >A. korrekt anzeigen</div>
+            
+            <div class="cssAnwButton" id="btnOptKnzAntwortFalschAnzeigen"  >A. falsch anzeigen</div>
+            
+            <div class="cssAnwButton" id="btnOptStandardWerte"             >Standardwerte</div>
+        
+        </div>
+
+        <div id="frameOptionen2" class="frameButtonDiv" >
+        
+            <div class="cssAnwButton" id="btnOptAntwortReduzierung1"     >Reduzierung 1</div>
+
+            <div class="cssAnwButton" id="btnOptAntwortReduzierung2"     >Reduzierung 2</div>
+
+            <div class="cssAnwButton" id="btnOptAntwortReduzierung3"     >Reduzierung 3</div>
+
+            <div class="cssAnwButton" id="btnOptAntwortReduzierungAus"   >Reduzierung aus</div>
+        
+        </div>
+        
+        <div id="frameDatei" class="frameButtonDiv" >
+        
+            <div class="cssAnwButton" id="btnDateiLaden"               >Laden</div>
+
+            <div class="cssAnwButton" id="btnFragenkatalogHinzufuegen" >FK hinzufuegen</div>
+            
+            <div class="cssAnwButton" id="btnFragenUmstellung"         >FK mischen</div>
+
+            <div class="cssAnwButton" id="btnErstelleTestFk"           >Test Fragenkatalog</div>
+        
+        </div>
+
+
+        <div id="frameDateL" class="frameButtonDiv" >
+        
+            <div class="cssAnwButton" id="btnStartExportFragebogen" >Export Fragebogen</div>
+            
+            <div class="cssAnwButton" id="btnStartExportLernFabrik" >Export Fragesitzung</div>
+
+            <div class="cssAnwButton" id="btnStartShowAnleitung"    >Anleitung</div>
+        
+        </div>
+
+        <div id="frameOptionenExport" class="frameButtonDiv" >
+        
+            <table border="0" cellspacing="2" cellpadding="1" >
+
+            <tr>
+            <td><div class="cssOptzeile" ><input type="checkbox" id="cbKnzExportFragentext"     name="cbKnzExportFragentext"     checked="checked" ><label for="cbKnzExportFragentext"     >Fragentext exportieren</label></div></td>
+            <td><div class="cssOptzeile" ><input type="checkbox" id="cbKnzExportAntwortKorrekt" name="cbKnzExportAntwortKorrekt" checked="checked" ><label for="cbKnzExportAntwortKorrekt" >Antwort korrekt exportieren</label></div></td>
+            <td><div class="cssOptzeile" ><input type="checkbox" id="cbKnzExportAntwortFalsch"  name="cbKnzExportAntwortFalsch"  checked="checked" ><label for="cbKnzExportAntwortFalsch"  >Antwort falsch exportieren</label></div></td>
+            </tr>
+
+            <tr>
+            <td><div class="cssOptzeile" ><input type="checkbox" id="cbKnzMarkiereAntwortKorrekt" name="cbKnzMarkiereAntwortKorrekt" checked="checked" ><label for="cbKnzMarkiereAntwortKorrekt" >korrekte Antworten markieren</label></div></td>
+            <td><div class="cssOptzeile" ><input type="checkbox" id="cbKnzErstelleLoesungsbogen"  name="cbKnzErstelleLoesungsbogen"  checked="checked" ><label for="cbKnzErstelleLoesungsbogen"  >L&ouml;sungsbogen erstellen</label></div></td>
+            <td><div class="cssOptzeile" ><input type="checkbox" id="cbKnzAntwortenUmstellen"     name="cbKnzAntwortenUmstellen"                       ><label for="cbKnzAntwortenUmstellen"     >Antwortreihenfolge umstellen</label></td>
+            </tr>
+
+            </table>
+
+        </div>
+    
+        <div style="display: none" >
+    
+            <input id="idHtmlDateiInputElement" type="file" >
+    
+            <a id="linkAnlteitung" href="file:./Anleitung_JavaScript_Fragenfrager.pdf" target="_blank" >Anleitung</a>
+
+        </div>
+
+    
+    </div>
+
+</body>
+
+</html>
