@@ -1383,7 +1383,11 @@
     
         /* 
          * Ueber 8 boolsche Variablen wird die Ausblendung der Antworten gesteuert.
+         * 
          * Die Variablen werden mit "FALSE" (=Antwort bleibt auswaehlbar) initialisiert.
+         * 
+         * Diese Variablen sind notwendig, um bei mehreren Durchlaeufen dieser Funktion, 
+         * alle Antworten korrekt frei- oder einschalten zu koennen.
          */
         var knz_antwort_1_raus = false;
         var knz_antwort_2_raus = false;
@@ -1502,6 +1506,7 @@
     
         /* 
          * Zum Abschluss werden die Antworten entweder aus- oder eingeblendet.
+         * 
          */
         this.anwUiXAntwortEnabled( knz_antwort_1_raus, "#lblMyCheckBoxA1", "#lblBezAntwort1", "#lblAntwort1" );
         this.anwUiXAntwortEnabled( knz_antwort_2_raus, "#lblMyCheckBoxA2", "#lblBezAntwort2", "#lblAntwort2" );
