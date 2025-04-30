@@ -114,6 +114,22 @@
   }
 
 
+  clsAntwort.prototype.toJson = function()
+  {
+    let json_string = "";
+
+    json_string += '\n  {';
+    json_string += '\n' + fkString.jsonGetString( "id", this.m_id ) + ',';
+    json_string += '\n' + fkString.jsonGetString( "antwort_bez",  this.m_antwort_bez ) + ',';
+    json_string += '\n' + fkString.jsonGetString( "antwort_text",  this.m_antwort_text ) + ',';
+    json_string += '\n' + fkString.jsonGetString( "bemerkung",  this.m_bemerkung ) + ',';
+    json_string += '\n' + fkString.jsonGetString( "knz_korrekt",  this.m_knz_korrekt ) + '';
+    json_string += '\n  }';
+
+    return json_string;
+  }
+
+
   clsAntwort.prototype.clear = function()
   {
     this.m_id           = 0;

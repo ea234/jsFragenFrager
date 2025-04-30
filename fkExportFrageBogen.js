@@ -209,7 +209,7 @@
     /*
      * Dummyzeile fuer Arry-Position 0
      * 
-     * Die Identifizierung der Spaltenpositionen im Loesungsbogen werden ueber* eine Formel gemacht. 
+     * Die Identifizierung der Spaltenpositionen im Loesungsbogen werden ueber eine Formel gemacht. 
      * 
      * Diese Formel ist einfacher zu handhaben, wenn die auszugebenden Positionen bei Index 1 anfangen.
      * 
@@ -251,7 +251,7 @@
           string_datei_inhalt += this.getFrageExportString( temp_frage, this.NEW_LINE, pKnzExportiereKorrekteAntworten, pKnzExportiereFalscheAntworten, pKnzExportiereAntwortBezeichnung, pKnzExportiereFragentext, pKnzMarkiereAntwortKorrekt, pKnzAntwortReihenfolgeUmstellen );
 
           /*
-           * Korrekt-String !
+           * Korrekt-String 
            * 
            * Fuer die Erstellung des Loesungsbogens wird ein String aufgebaut, welcher 
            * die Frage-Nummer und die korekten Antworten enthaelt. 
@@ -412,10 +412,10 @@
        * Es gibt 3 unterschiedliche Exportarten:
        * - alle korrekt beantworteten Fragen
        * - alle falsch beantworteten Fragen
-       * - alle Fragen
+       * - alle Fragen der aktuellen Fragensitzung
        * 
        * Je nach Exportmodus wird die entsprechende Funktion in der Lernfabrik aufgerufen, 
-       * welche den Index der naechsten zu exportierenden Frage ermittelt.
+       * welche den Index der naechsten zu exportierenden Frage zurueck gibt.
        */
       if ( pExportModus == this.EXPORT_LERN_FABRIK_KORREKT )
       {
@@ -552,7 +552,9 @@
        * fuer die Umstellung der Antwortreihenfolge aufgerufen. 
        * 
        * Soll die Antwortreihenfolge nicht umgestellt werden, wird an der Frage 
-       * die Funktion fuer den Reset der Antwortreihenfolge aufgerufen. 
+       * die Funktion fuer den Reset der Antwortreihenfolge aufgerufen. Dieses 
+       * ist notwendig um eine eventuell in der UI umgestellte Reihenfolge
+       * wieder in die normale Reihenfolege umzustellen.
        */
       if ( pKnzAntwortReihenfolgeUmstellen )
       {
@@ -574,6 +576,8 @@
        * 2. Kennzeichenermittlung, ob die Antwort exportiert werden soll
        * 3. Wenn die Antwort exportiert werden soll, wird der Antworttext
        *    dem Ergebnisstring formartiert hinzugefuegt.
+       *
+       * Die UI-Positionen beginnen bei 1 (nicht bei 0).
        */
       var akt_ui_position = 1;
 
@@ -676,7 +680,8 @@
        * 
        * Befindet sich der Fragenkatalog noch im Originalzustand, wird die 
        * originaere Fragennummer genommen. Wurde ein weiterer Fragenkatalog
-       * dem bestehenden Fragenkatalog hinzugefuegt, wird die laufende Nr genommen.
+       * dem bestehenden Fragenkatalog hinzugefuegt, wird die laufende Nummer 
+       * der Frage genommen.
        */
       str_fragen_nummer = ( this.knz_use_lfd_nr ? "" + pFrage.getLfdNummer() : pFrage.getNummer() );
 
@@ -738,8 +743,9 @@
         /* 
          * Sortierung Loesungsbogen
          * Die exportierten Fragen muessen nicht in der Reihenfolge des Fragenkataloges 
-         * kommen. Somit ergibt sich das Problem, dass der Loesungsbogen auch nicht 
-         * in einer sortierten Reihenfolge erstellt worden ist.
+         * kommen. Die Angaben im Loesungsbogen muessen sich an den Fragennummern orientieren.
+         * Die Fragen im erstelltem Loesungsbogen-Array sind nicht in einer sortierten 
+         * Reihenfolge erstellt worden. 
          *
          * Der Loesungsbogen wird aufsteigend sortiert.
          */
@@ -759,6 +765,10 @@
          */
         var lb_anzahl_spalten = this.ConvertToInt32( this.VORGABE_ANZ_STELLEN / spalten_breite_1 );
 
+        /* 
+         * Ist die Anzahl der Spalten im Loesungsbogen kleiner als 1 wird diese auf 
+         * den Wert 1 gestellt, damit mindestens eine Spalte vorhanden ist.
+         */
         if ( lb_anzahl_spalten < 1 ) 
         {
           lb_anzahl_spalten = 1;
@@ -1025,12 +1035,14 @@
    * Auf Wortebene wird aufgrund der kuerzesten Differenz zur berechneten BIS-Position getrennt.
    * 
    * 
+   * var string_eingabe = "A B C D E F G H ";
+   * var string_praefix = "...";
    * 
-   * String eingabe_string = "A B C D E F G H ";
+   * var anzahl_zeichen_je_zeile = string_eingabe.length();
    * 
-   * String ausgabe_string = FkStringText.getStringMaxCols( eingabe_string + eingabe_string + eingabe_string + eingabe_string + " A      Z", eingabe_string.length(), "...", "\n" );
+   * var string_ausgabe = FkStringText.getStringMaxCols( string_eingabe + string_eingabe + string_eingabe + string_eingabe + " A      Z", anzahl_zeichen_je_zeile, string_praefix, "\n" );
    * 
-   * wl( ausgabe_string );
+   * System.out.println( string_ausgabe );
    * 
    * 
    *                     =          10        20        30        40        50        60        70        80        90 
@@ -1063,17 +1075,17 @@
     var char_leer_zeichen  = ' ';
     var char_zeilenumbruch = '\n';
 
-    var str_ergebnis   = "";
-    var str_neue_zeile = "";
-    var my_cr          = "";
+    var str_ergebnis       = "";
+    var str_neue_zeile     = "";
+    var my_cr              = "";
 
     var trenn_position_ab        = -1;
     var trenn_position_bis_init  = -1;
-    var trenn_position_bis_plus  = 0;
+    var trenn_position_bis_plus  =  0;
     var trenn_position_bis_minus = -1;
 
-    var max_ueberspringen_anzahl = 5;
-    var max_ueberspringen_pos    = 0;
+    var max_ueberspringen_anzahl =  5;
+    var max_ueberspringen_pos    =  0;
 
     var zaehler = 0;
 
@@ -1148,7 +1160,7 @@
           max_ueberspringen_pos = trenn_position_ab + max_ueberspringen_anzahl;
 
           /*
-           * Liegt die Max-Ueberspringen-Pos hinter dem Stringenede, wird diese 
+           * Liegt die Max-Ueberspringen-Pos hinter dem Stringende, wird diese 
            * Position auf das Stringende gelegt.
            */
           if ( max_ueberspringen_pos > max_str_pos )
@@ -1157,12 +1169,23 @@
           }
 
           /*
-           * While-Schleife fuer das Ueberspringen
+           * While-Schleife fuer das Ueberspringen von Leerzeichen am Ende der aktuellen Zeile.
+           * 
+           * Die While-Schleife laeuft solange, wie
+           * ... das aktuelle Zeichen an der Leseposition noch ein Leerzeichen ist
+           * ... die aktuelle Position noch kleiner als die berechnete Maximalposition 
+           *     fuer die aktuelle Zeile ist.
            */
           while ( ( trenn_position_ab < max_ueberspringen_pos ) && ( akt_char == char_leer_zeichen ) )
           {
+            /*
+             * Trennposition erhoehen
+             */
             trenn_position_ab++;
 
+            /*
+             * Zeichen an der Trennposition lesen
+             */
             akt_char = pEingabe.charAt( trenn_position_ab );
           }
 

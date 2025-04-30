@@ -164,7 +164,7 @@
          * 
          * Fuer jede Antwort, die "inaktiv" werden soll, gibt es eine "1".
          * 
-         * Fuer jede Antwort, die "aktiv" bleiben soll, gibt es eine "0"
+         * Fuer jede Antwort, die "aktiv" bleiben soll, gibt es eine "0".
          */
         ausblend_string = fkString.left( "11111111", anzahl_antworten_raus ) + fkString.left( "00000000", anzahl_falscher_antworten_die_bleiben ) ;
       }
@@ -198,7 +198,7 @@
       var anzahl_korrekte_antworten = this.getAnzahlKorrekteAntworten(); 
 
       /*  
-       * Anzahl der falschen Antworten berechnen, welche drin bleiben sollen
+       * Anzahl der falschen Antworten berechnen, welche drin bleiben sollen.
        */
       var anzahl_falscher_antworten_die_bleiben = anzahl_korrekte_antworten * pAnzahlFalscheAntwortenJeKorrekterAntwort;
 
@@ -234,7 +234,7 @@
         ausblend_string = fkString.getRandomUmgestellt( 20, ausblend_string );
 
         /*
-         * 1 korrekte Antwort * 2 je drin bleiben = 2 bleiben drin
+         * 1 korrekte Antwort * 2 je Antworten, welche drin bleiben = 2 bleiben drin
          * 
          * Gibt es 3 falsche Antworten 
          * 
@@ -1325,3 +1325,45 @@
  }
 
 
+ clsFrage.prototype.toJson = function()
+ {
+   let json_string = "";
+
+    json_string += '\n{';
+ 
+    json_string += '\n' + fkString.jsonGetString( "id", this.m_id ) + ',';
+    json_string += '\n' + fkString.jsonGetString( "nummer",  this.m_nummer) + ',';
+    json_string += '\n' + fkString.jsonGetString( "geltungsbereich", this.m_geltungsbereich) + ',';
+    json_string += '\n' + fkString.jsonGetString( "text_1",  this.m_text_1) + ',';
+    json_string += '\n' + fkString.jsonGetString( "text_2",  this.m_text_2) + ',';
+
+    json_string += this.toJsonAntwort("antwort_instanz_a", this.m_antwort_instanz_a );
+    json_string += this.toJsonAntwort("antwort_instanz_b", this.m_antwort_instanz_b );
+    json_string += this.toJsonAntwort("antwort_instanz_c", this.m_antwort_instanz_c );
+    json_string += this.toJsonAntwort("antwort_instanz_d", this.m_antwort_instanz_d );
+    json_string += this.toJsonAntwort("antwort_instanz_e", this.m_antwort_instanz_e );
+    json_string += this.toJsonAntwort("antwort_instanz_f", this.m_antwort_instanz_f );
+    json_string += this.toJsonAntwort("antwort_instanz_g", this.m_antwort_instanz_g );
+
+    json_string += '\n' + fkString.jsonGetString( "bemerkung",  this.m_bemerkung ) ;
+
+    json_string += '\n}';
+
+   return json_string;
+ }
+
+ clsFrage.prototype.toJsonAntwort = function( pJsonName, pAntwort ) 
+ {
+    let json_string = "";
+    
+    if ( pAntwort != undefined )
+    {
+      json_string += '\n  \"' + pJsonName + '\" : ' +  pAntwort.toJson()  + ',';
+    }
+    else
+    {
+      json_string += '\n  \"' + pJsonName + '\" : null, ';
+    }
+
+    return json_string;
+ }

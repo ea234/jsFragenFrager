@@ -57,7 +57,7 @@ var fkTestErstellungFragenkatalog = {
 
       aktuelle_frage.setNummer( "" + fragen_nr );
 
-      aktuelle_frage.setText1( "Fragenblock 2 Nr. " + fragen_zaehler + " von " + fragen_anzahl );
+      aktuelle_frage.setText1( " \"Test\" Fragenblock 2 Nr. " + fragen_zaehler + " von " + fragen_anzahl );
 
       aktuelle_frage.setAntwortA( fkTestErstellungFragenkatalog.getTestAntwort( true,                1, fragen_zaehler === 1,  "A" ) );
       aktuelle_frage.setAntwortB( fkTestErstellungFragenkatalog.getTestAntwort( true,                2, false, "B" ) );

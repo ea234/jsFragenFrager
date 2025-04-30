@@ -2,7 +2,7 @@
   function clsFragenKatalog()
   {
     /*
-     * Variable fuer den Vektor (Array)
+     * Variable fuer den Vektor (Array) der Fragen
      */
     this.m_frage_vector = undefined;
 

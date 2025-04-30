@@ -14,6 +14,7 @@
     <script src="fkTestErstellungFragenkatalog.js" type="text/javascript" ></script>
     <script src="fkExportFrageBogen.js"            type="text/javascript" ></script> 
     <script src="fkFragenKatalogLaden.js"          type="text/javascript" ></script>
+    <script src="fkExportFragenkatalog2Json.js"    type="text/javascript" ></script>
     <script src="fkString.js"                      type="text/javascript" ></script>
     
     <script src="jquery-1.9.0.min.js"              type="text/javascript" ></script>
@@ -41,18 +42,18 @@
     .cssLabelAntwort { width:100%; }
 
     .cssAnwButton   { 
-        padding-top:5px; 
-        padding-bottom:5px; 
-        display:inline; 
-        overflow:hidden;
+        padding-top:      5px; 
+        padding-bottom:   5px; 
+        display:          inline; 
+        overflow:         hidden;
         background-color: #ECECEC;
-        margin-top:1px; 
-        margin-bottom:5px;
-        margin-left:1px; 
-        margin-right:10px;
-        border: 1px solid black;
-        width:160px !important;
-        text-align:center;
+        margin-top:       1px; 
+        margin-bottom:    5px;
+        margin-left:      1px; 
+        margin-right:     10px;
+        border:           1px solid black;
+        width:            160px !important;
+        text-align:       center;
     }
     
     .cssAnwButton:hover { 
@@ -61,19 +62,19 @@
 
     .cssMyLabelCheckBox {
         background-color: #aaAAaa;
-        width:20px;
-        padding-left:5px; 
-        padding-right:5px; 
+        width:            20px;
+        padding-left:     5px; 
+        padding-right:    5px; 
      }
 
      .cssPropChecked {
         background-color: #FAF040 !important;
-        border: 1px solid black;
+        border:           1px solid black;
      }
 
      .cssOptzeile {
         background-color: background-color:#dfdfdf; !important;
-        display: inline-block;
+        display:          inline-block;
      }
 
     .frameButtonDiv { padding-top:1px; padding-bottom:1px; overflow:hidden;  height: auto !important; display:flex; background-color:#dfdfdf; }
@@ -492,8 +493,8 @@
     {
       /* 
        * Modus Fragenkatalog anzeigen
-       * 
-       * Es wird die Funktion "anwNeueFrageAnzeigen" mit dem Command aufgerufen.
+       * Im Modus "Fragenkatalog anzeigen" soll nur die naechste Frage angezeigt
+       * werden. Es wird dafuer die Funktion "anwNeueFrageAnzeigen" aufgerufen.
        */
       this.anwNeueFrageAnzeigen( pCommand );
     }
@@ -603,7 +604,7 @@
           }
 
           /*
-           * 
+           * Pruefung: Kennzeichen "Frage korrekt beantwortet" gleich true ?
            */
           if ( knz_frage_beantwortet )
           {
@@ -720,7 +721,7 @@
           this.m_anzahl_prozent_falsch  = ( 100.0 * this.m_anzahl_falsch_beantwortet  ) / ( this.m_anzahl_fragen_beantwortet );
 
           /*
-           * Zaehlerwerte in die UI-Controls schreiben
+           * Die Statistikwerte werden in die UI-Controls geschrieben.
            */
           this.anwUiSetAnzahlAngezeigt( this.m_anzahl_angezeigt );
           this.anwUiSetAnzahlFragenBeantwortet( this.m_anzahl_fragen_beantwortet );
@@ -1001,7 +1002,6 @@
          * 
          * Die Ermittlungsfunktion "hasUiPositionAntwort" beruecksichtigt hierbei auch
          * das Kennzeichen, ob die Antwort "aktiv" ist.
-         * 
          */
         if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_1 ) ) { $( "#lblMyCheckBoxA1" ).show(); $( "#lblAntwort1" ).show(); } else { $( "#lblMyCheckBoxA1" ).hide(); $( "#lblAntwort1" ).hide(); }
         if ( this.m_aktuelle_frage.hasUiPositionAntwort( this.INDEX_ANTWORT_2 ) ) { $( "#lblMyCheckBoxA2" ).show(); $( "#lblAntwort2" ).show(); } else { $( "#lblMyCheckBoxA2" ).hide(); $( "#lblAntwort2" ).hide(); }
@@ -1323,9 +1323,9 @@
        * als 50 Prozent ausgeblendet.
        * 
        * In dieser Version werden nur Ausblendungen gemacht, wenn die Anzahl
-       * der falschen Antworten zwischen 2 und 7 liegt.
+       * der falschen Antworten zwischen 1 und 7 liegt.
        * 
-       *    1 falsche Antwort   = 0        = 0 Antworten raus
+       *    1 falsche Antwort   = 1        = 1 Antwort raus
        *    2 falsche Antworten = 10       = 1 Antwort raus
        *    3 falsche Antworten = 110      = 2 Antworten raus
        *    4 falsche Antworten = 1100     = 2 Antworten raus
@@ -1353,7 +1353,8 @@
        */
       var ausblend_str = undefined;
       
-           if ( anzahl_falsche_antworten == 2 ) { ausblend_str = "10";      }
+           if ( anzahl_falsche_antworten == 1 ) { ausblend_str = "1";      }
+      else if ( anzahl_falsche_antworten == 2 ) { ausblend_str = "10";      }
       else if ( anzahl_falsche_antworten == 3 ) { ausblend_str = "110";     }
       else if ( anzahl_falsche_antworten == 4 ) { ausblend_str = "1100";    }
       else if ( anzahl_falsche_antworten == 5 ) { ausblend_str = "11100";   }
@@ -2020,6 +2021,26 @@
     }
   }
 
+  appFF.prototype.anwExportJSonFragenKatalog = function()
+  {
+    /*
+     * Aufruf der Exportfunktion fuer den gesamten Fragenkatalog.
+     * 
+     * Nach dem Export wird in der Statuszeile ein Text angezeigt, ob 
+     * der Export geklappt hat oder nicht.
+     */
+    if ( this.getAnwFragenFrager().exportJSonFragenKatalog( this.anwUiIsKnzExportAntwortKorrektChecked(), this.anwUiIsKnzExportAntwortFalschChecked(), true, this.anwUiIsKnzExportFragentextChecked(), this.anwUiIsKnzMarkiereAntwortKorrekhChecked(), this.anwUiIsKnzErstelleLoesungsbogenChecked(), this.anwUiIsKnzExportAntwortenUmstellenChecked() ) )
+    {
+      this.anwUiSetStatusText( "Export Fragenkatalog OK" );
+    }
+    else
+    { 
+      this.anwUiSetStatusText( "Kein Fragenkatalog fuer den Export vorhanden" );
+    }
+  }
+
+
+
 
   appFF.prototype.anwExportFrageBogenLernFabrik = function()
   {
@@ -2306,6 +2327,8 @@
       $( "#btnStartExportFragebogen"        ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwExportFrageBogenFragenKatalog();    } );
 
       $( "#btnStartExportLernFabrik"        ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwExportFrageBogenLernFabrik();       } );
+
+      $( "#btnStartJSonFragenKatalog"       ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwExportJSonFragenKatalog();       } );
 
       $( "#btnEndAbfrageModus"              ).click( function( pEvent ) { pEvent.preventDefault(); appUI.m_app.anwStoppAbfrageModus();                } );
 
@@ -2609,6 +2632,8 @@
             <div class="cssAnwButton" id="btnStartExportFragebogen" >Export Fragebogen</div>
             
             <div class="cssAnwButton" id="btnStartExportLernFabrik" >Export Fragesitzung</div>
+
+            <div class="cssAnwButton" id="btnStartJSonFragenKatalog" >Export JSon</div>
 
             <div class="cssAnwButton" id="btnStartShowAnleitung"    >Anleitung</div>
         

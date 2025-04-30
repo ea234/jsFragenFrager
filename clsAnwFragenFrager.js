@@ -593,6 +593,25 @@
   }
 
 
+
+  clsAnwFragenFrager.prototype.exportJSonFragenKatalog = function( pKnzExportiereKorrekteAntworten, pKnzExportiereFalscheAntworten, pKnzExportiereAntwortBezeichnung, pKnzExportiereFragentext, pKnzMarkiereAntwortKorrekt, pKnzErstelleLoesungsbogen, pKnzAntwortReihenfolgeUmstellen )
+  {
+    var fkt_ergebnis = false;
+
+    if ( this.m_modus != this.MODUS_KEINE_FRAGEN_GELADEN )
+    {
+      console.log( "Test" );
+            var fk_exp = new clsExportJSonFrageBogen();
+
+      fkt_ergebnis = fk_exp.startExportFbFragenKatalog2Json( this.getFragenKatalog(), pKnzExportiereKorrekteAntworten, pKnzExportiereFalscheAntworten, pKnzExportiereAntwortBezeichnung, pKnzExportiereFragentext, pKnzMarkiereAntwortKorrekt, pKnzErstelleLoesungsbogen, pKnzAntwortReihenfolgeUmstellen );
+    }
+
+    return fkt_ergebnis;
+  }
+
+
+
+
   /**
    * Exportiert die aktuelle Fragensitzung mit den Parameterkennzeichen
    *
