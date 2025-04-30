@@ -424,6 +424,16 @@ var fkString = {
 
   jsonGetString: function (pElementName, pElementWert) 
   {
+    if ( pElementName === undefined)
+    {
+      return "";
+    }
+
+    if ( pElementWert === undefined )
+    {
+      return '\"' + pElementName + '\" : null';
+    }
+
     if (typeof (pElementWert) == "number") 
     {
       return '\"' + pElementName + '\" : ' + pElementWert;
