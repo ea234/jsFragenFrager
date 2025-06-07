@@ -104,7 +104,7 @@
   clsFragenKatalog.prototype.clear = function()
   {
     /*
-     * Pruefung: Variable "m_calc_zahlung_vector" ungleich undefined?
+     * Pruefung: Variable "m_frage_vector" ungleich undefined?
      *
      * Ist der Vektor nicht vorhanden, sind auch keine Elemente zum loeschen vorhanden
      */
@@ -241,11 +241,17 @@
   clsFragenKatalog.prototype.getAktuelleFrage = function()
   {
     /*
-     * Pruefung: Datensatzzeiger innerhalb Array-Grenzen ?
+     * Pruefung: Fragenvektor-Instanz vorhanden?
      */
-    if ( ( this.m_daten_satz_zeiger >= 0 ) && ( this.m_daten_satz_zeiger < this.getAnzahlFragen() ) )
+    if ( this.m_frage_vector != undefined )
     {
-      return this.m_frage_vector[ this.m_daten_satz_zeiger ];
+      /*
+       * Pruefung: Datensatzzeiger innerhalb Array-Grenzen ?
+       */
+      if ( ( this.m_daten_satz_zeiger >= 0 ) && ( this.m_daten_satz_zeiger < this.getAnzahlFragen() ) )
+      {
+        return this.m_frage_vector[ this.m_daten_satz_zeiger ];
+      } 
     }
 
     /*
@@ -285,6 +291,7 @@
         //
       }
     }
+
 
     /*
      * Bei Fehler wird "undefined" zurueckgegeben.
@@ -656,7 +663,7 @@
   clsFragenKatalog.prototype.startAntwortReduktion = function( pAnzahlFalscheAntwortenJeKorrekterAntwort )
   {
     /*
-     * Pruefung: Variable "m_calc_zahlung_vector" ungleich undefined?
+     * Pruefung: Variable "m_frage_vector" ungleich undefined?
      *
      * Ist der Vektor nicht vorhanden, sind auch keine Elemente zum loeschen vorhanden
      */
